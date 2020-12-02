@@ -13,16 +13,13 @@ include ../common.inc
 
 
 all:
-	@echo "specify one of the following make options: textres manpages README or clean"
+	@echo "specify one of the following make options: textres manpages or clean"
 
 textres: stunserver.txtcode stunserver_lite.txtcode stunclient.txtcode stunclient_lite.txtcode
 
 manpages: stunserver.1 stunclient.1
 
-README: readme.src
-	../stuntestcode --pp < readme.src > README
-
 clean:
-	rm -f *.txtcode README *.1
+	rm -f *.txtcode *.1
 
 

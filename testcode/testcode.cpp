@@ -102,30 +102,6 @@ void RunUnitTests()
     }
 }
 
-void PrettyPrintTest()
-{
-    const size_t MAX_TEXT_SIZE = 100000;
-    char* buffer = new char[MAX_TEXT_SIZE];
-
-    size_t messagesize = 0;
-
-    while (messagesize < MAX_TEXT_SIZE)
-    {
-        int ret = getchar();
-        if (ret < 0)
-        {
-            break;
-        }
-
-        buffer[messagesize] = (signed char)(ret);
-        messagesize++;
-    }
-
-    ::PrettyPrint(buffer, 78);
-
-    delete[] buffer;
-}
-
 int main(int argc, char** argv)
 {
     CCmdLineParser cmdline;
@@ -134,17 +110,12 @@ int main(int argc, char** argv)
     bool fParseError = false;
 
     cmdline.AddOption("fuzz", no_argument, &strFuzz);
-    cmdline.AddOption("pp", no_argument, &strPP);
 
     cmdline.ParseCommandLine(argc, argv, 1, &fParseError);
 
     if (strFuzz.size() > 0)
     {
         ReaderFuzzTest();
-    }
-    else if (strPP.size() > 0)
-    {
-        PrettyPrintTest();
     }
     else
     {

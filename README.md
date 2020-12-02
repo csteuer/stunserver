@@ -1,18 +1,24 @@
-STUNTMAN - An open source STUN server
+# STUNTMAN - An open source STUN server
 Version 1.2.16
+
 April 7, 2020
 
----------------------------------------------------------
+## About the fork 
 
 This is a fork of [stunserver](https://github.com/jselbie/stunserver) from
-jselbie with cmake support.
-When using cmake boost is an optional dependency that is only required if the
-cmake option `with_configfile_support` is set to `ON`.
-If the option is set to `OFF` (which is the default) the server application
-can not be configured with a JSON file (command line options are still
-possible).
+John Selbie with the following changes:
 
-To build with cmake install OpenSSL (see below) and run:
+* CMake support
+* Boost is optional (when building with CMake)
+  * The CRC 32 implementation of boost has been replaced with a modified version of [Simple CRC32](http://home.thep.lu.se/~bjorn/crc/) by Björn Samuelsson
+  * Smart pointers have been replaced with C++11 smart pointers
+* clang-format has been used to format the changed source files. 
+  Although I have tried to create a formatting configuration close to the original style
+  there are some white space changes.
+* The README has been converted into a markdown file and is no longer formatted with the custom pretty printer.
+* Some other minor changes on the documentation resource generation and usage.
+
+To build with CMake install OpenSSL (see below) and run:
 
 ```
 mkdir build
@@ -21,81 +27,82 @@ cmake ..
 cmake --build .
 ```
 
----------------------------------------------------------
+### Optional Boost
 
+Boost is only required if the CMake option `with_configfile_support` is set to `ON`.
+If the option is set to `OFF` (which is the default) the server application
+can not be configured with a JSON file (command line options are still possible).
 
+### Why this fork
 
-Features:
+The changes make it easier to use STUNTMAN as a dependency in other projects (e.g. as an [external project](https://cmake.org/cmake/help/latest/module/ExternalProject.html?highlight=externalproject) 
+ with CMake).
 
-  Compliant with the latest RFCs including 5389, 5769, and 5780. Also includes
+## Features:
+
+  * Compliant with the latest RFCs including 5389, 5769, and 5780. Also includes
   backwards compatibility for RFC 3489.
 
-  Supports both UDP and TCP on both IPv4 and IPv6.
+  * Supports both UDP and TCP on both IPv4 and IPv6.
 
-  Client test app provided.
+  * Client test app provided.
 
-  Stun server can operate in "full" mode as well as "basic" mode. Basic mode
+  * Stun server can operate in "full" mode as well as "basic" mode. Basic mode
   configures the server to listen on one port and respond to STUN binding
   requests. Full mode configures the service to listen on two different IP
-  address interfaces (if available) and provide NAT behavior and filtering
+  address interfaces (if available) and provide NAT behaviour and filtering
   detection support for clients.
 
-  Support for running a full mode STUN service on an Amazon EC2 instance. Run
+  * Support for running a full mode STUN service on an Amazon EC2 instance. Run
   "stunserver --help" for visit www.stunprotocol.org on how to configure this
   mode.
 
-  Open source Apache license. See LICENSE file fore more details.
----------------------------------------------------------
+  * Open source Apache license. See LICENSE file fore more details.
 
+## Known issues:
 
-Known issues:
+  * TLS mode has yet to be implemented.
 
-  TLS mode has yet to be implemented.
-
-  Server does not honor the stun padding attribute. If someone really wants
+  * Server does not honour the stun padding attribute. If someone really wants
   this support, let me know and I will consider adding it.
 
-  By default, the stun server operates in an open mode without performing
+  * By default, the stun server operates in an open mode without performing
   authentication. All the code for authentication, challenge-response, message
   hashing, and message integrity attributes are fully coded. HMAC/SHA1/MD5
   hashing code for generating and validating the message integrity attribute
-  has been implemented and tested. However, the code for validating a username
+  has been implemented and tested. However, the code for validating a user name
   or looking up a password is outside the scope of this release. Instead,
-  hooks are provided for implementors to write their own code to validate a
-  username, fetch a password, and allow/deny a request. Details of writing
+  hooks are provided for implementers to write their own code to validate a
+  user name, fetch a password, and allow/deny a request. Details of writing
   your own authentication provider code are described in the file
   "server/sampleauthprovider.h".
 
-  Dependency checking is not implemented in the Makefile. So if you need to
-  recompile, I recommend "make clean" from the root to preceed any subsequent
+  * Dependency checking is not implemented in the Makefile. So if you need to
+  recompile, I recommend "make clean" from the root to precede any subsequent
   "make" call.
 
-  If you run an instance of stunserver locally, you may observe that
+  * If you run an instance of stunserver locally, you may observe that
   "stunclient localhost" may not successfully work. This is because the server
-  is not listening on the loopback adapter when running in full mode. The
+  is not listening on the loop-back adapter when running in full mode. The
   workaround is to specify the actual IP address that the server is listening
   on. Type "ifconfig" to discover your IP address (e.g. 10.11.12.13) followed
   by "stunclient 10.11.12.13"
----------------------------------------------------------
 
+## Testing:
 
-Testing:
+  * Fedora 15 with gcc/g++ 4.6.0
+  * Fedora 17 with gcc/g++ 4.72
+  * Ubuntu 11 with gcc/g++ 4.5.2
+  * Ubuntu 12 with gcc/g++ 4.6.3
+  * Ubuntu 12 with clang/clang++ 3.0
+  * Amazon AWS with gcc/g++ 4.4
+  * MacOS with XCode 7 and command line tools
+  * FreeBSD 9.0 with gcc/g++ 4.2.1
+  * Solaris 11 with gcc/g++ 4.5.2
 
-  Fedora 15 with gcc/g++ 4.6.0
-  Fedora 17 with gcc/g++ 4.72
-  Ubuntu 11 with gcc/g++ 4.5.2
-  Ubuntu 12 with gcc/g++ 4.6.3
-  Ubuntu 12 with clang/clang++ 3.0
-  Amazon AWS with gcc/g++ 4.4
-  MacOS with XCode 7 and command line tools
-  FreeBSD 9.0 with gcc/g++ 4.2.1
-  Solaris 11 with gcc/g++ 4.5.2
+Parsing code has been fuzz tested with zzuf. http://caca.zoy.org/wiki/zzuf
 
-  Parsing code has been fuzz tested with zzuf. http://caca.zoy.org/wiki/zzuf
----------------------------------------------------------
-
-
-Prerequisites before compiling and running.
+## Prerequisites before compiling and running.
 
   The short summary is that you need a C++ compiler (g++ preferred or
   clang++), GNU make, Boost header files, and the OpenSSL development files in
@@ -103,46 +110,43 @@ Prerequisites before compiling and running.
   that you can type from the command line to get the tools and libraries you
   need.
 
-  Debian/Ubuntu/Mint
+### Debian/Ubuntu/Mint
       sudo apt-get install g++
       sudo apt-get install make
       sudo apt-get install libboost-dev # For Boost
       sudo apt-get install libssl-dev # For OpenSSL
 
-  RedHat/Fedora and EC2 Amazon Linux AMI
+### RedHat/Fedora and EC2 Amazon Linux AMI
       sudo yum groupinstall "Development Tools" # For g++, make, et. al.
       sudo yum install boost-devel # For Boost
       sudo yum install openssl-devel # For OpenSSL
 
-  Solaris and Mac
+### Solaris and Mac
       OpenSSL is already installed on Solaris and is not needed on Mac.
 
       Install Boost locally as per instructions below, then uncomment and edit
       the top line of the common.inc file.
 
-  Manual Boost install
+### Manual Boost install
     The compiled Boost runtime is not necessary. Just obtaining and unpacking
     the Boost source code distribution from www.boost.org will suffice. If you
-    do not have the adminstrative privaleges to install the Boost distribution
+    do not have the administrative privileges to install the Boost distribution
     into a standard system include path, you may uncomment and edit the top
     line of the common.inc file for the BOOST_INCLUDE variable. The common.inc
     file is in the same folder as this README file.
 
-  Manual OpenSSL install
+### Manual OpenSSL install
     You can obtain the OpenSSL development files and runtime from
     www.openssl.org. On most systems with development tools already installed,
     OpenSSL include files are already installed in the standard include path.
     If this is not the case, you can uncomment and edit the common.inc file to
     have the OPENSSL_INCLUDE variable defined.
 
-  Other prerequisites
+### Other prerequisites
      pthreads and perl. I've never come across a system where this wasn't
      already pre-installed.
 
----------------------------------------------------------
-
-
-Compiling and running
+## Compiling and running
 
   Got Boost and OpenSSL taken care of as described above? Good. Just type
   "make" (or "gmake" on some systems). There will be three resulting binaries
@@ -160,42 +164,32 @@ Compiling and running
 
   stunclient - this is the client test binary. Run "./stunclient --help" for
   details on running this program. Example: "./stunclient stun.selbie.com"
----------------------------------------------------------
 
-
-Firewall
+## Firewall
 
   Don't forget to configure your firewall to allow traffic for the local ports
   the stunserver will be listening on!
 
----------------------------------------------------------
+## Feature roadmap (the features I want to implement in a subsequent release)
 
+  * Clean-up Makefile and add "configure" and autotools support
 
-Feature roadmap (the features I want to implement in a subsequent release)
+  * Finish Windows port and able to run as a Windows service
 
-  Cleanup Makefile and add "configure" and autotools support
-
-  Finish Windows port and able to run as a Windows service
-
-  Scale across more than one CPU (for multi-core and multi-proc machines). The
+  * Scale across more than one CPU (for multi-core and multi-proc machines). The
   threading code has already been written, just needs some finish work.
 
-  TLS support
+  * TLS support
 
----------------------------------------------------------
-
-Docker
+## Docker
 
 1. `docker image build -t=stun-server-image .`
 2. `docker container run -d -p 3478:3478/tcp -p 3478:3478/udp
 --name=stun-container stun-server-image`
 
----------------------------------------------------------
-
-
-Contact the author
+## Contact the author
 
   John Selbie
   john@selbie.com
 
-
+> Please not that this is not the original version created by John Selbie.

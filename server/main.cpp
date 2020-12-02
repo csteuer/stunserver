@@ -44,7 +44,7 @@ using namespace boost::property_tree;
 void PrintUsage(bool fSummaryUsage)
 {
     size_t width = GetConsoleWidth();
-    const char* psz = fSummaryUsage ? stunserver_lite_text : stunserver_text;
+    const unsigned char* psz = fSummaryUsage ? stunserver_lite_text : stunserver_text;
 
     // save some margin space
     if (width > 2)
@@ -52,7 +52,7 @@ void PrintUsage(bool fSummaryUsage)
         width -= 2;
     }
 
-    PrettyPrint(psz, width);
+    PrettyPrint(reinterpret_cast<const char*>(psz), width);
 }
 
 // Because strerror_r has two versions (one that returns an int and another that returns char*)

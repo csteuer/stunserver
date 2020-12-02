@@ -14,8 +14,6 @@
    limitations under the License.
 */
 
-
-
 #include "commonincludes.hpp"
 #include "stuncore.h"
 #include "socketrole.h" // so we can re-use the "SocketRole" definitions again
@@ -31,7 +29,6 @@
 // These files are in ../resources
 #include "stunclient.txtcode"
 #include "stunclient_lite.txtcode"
-
 
 struct ClientCmdLineArgs
 {
@@ -57,24 +54,22 @@ void DumpConfig(StunClientLogicConfig& config, ClientSocketConfig& socketConfig)
 {
     std::string strAddr;
 
-
-    Logging::LogMsg(LL_DEBUG, "config.fBehaviorTest = %s", config.fBehaviorTest?"true":"false");
-    Logging::LogMsg(LL_DEBUG, "config.fFilteringTest = %s", config.fFilteringTest?"true":"false");
+    Logging::LogMsg(LL_DEBUG, "config.fBehaviorTest = %s", config.fBehaviorTest ? "true" : "false");
+    Logging::LogMsg(LL_DEBUG, "config.fFilteringTest = %s", config.fFilteringTest ? "true" : "false");
     Logging::LogMsg(LL_DEBUG, "config.timeoutSeconds = %d", config.timeoutSeconds);
     Logging::LogMsg(LL_DEBUG, "config.uMaxAttempts = %d", config.uMaxAttempts);
 
     config.addrServer.ToString(&strAddr);
-    Logging::LogMsg(LL_DEBUG, "config.addrServer = %s",  strAddr.c_str());
+    Logging::LogMsg(LL_DEBUG, "config.addrServer = %s", strAddr.c_str());
 
     socketConfig.addrLocal.ToString(&strAddr);
     Logging::LogMsg(LL_DEBUG, "socketconfig.addrLocal = %s", strAddr.c_str());
-
 }
 
 void PrintUsage(bool fSummaryUsage)
 {
     size_t width = GetConsoleWidth();
-    const char* psz = fSummaryUsage ? stunclient_lite_text : stunclient_text;
+    const unsigned char* psz = fSummaryUsage ? stunclient_lite_text : stunclient_text;
 
     // save some margin space
     if (width > 2)
@@ -82,10 +77,8 @@ void PrintUsage(bool fSummaryUsage)
         width -= 2;
     }
 
-    PrettyPrint(psz, width);
+    PrettyPrint(reinterpret_cast<const char*>(psz), width);
 }
-
-
 
 HRESULT CreateConfigFromCommandLine(ClientCmdLineArgs& args, StunClientLogicConfig* pConfig, ClientSocketConfig* pSocketConfig)
 {
@@ -99,7 +92,6 @@ HRESULT CreateConfigFromCommandLine(ClientCmdLineArgs& args, StunClientLogicConf
     char szIP[100];
     bool fTCP = false;
 
-
     config.fBehaviorTest = false;
     config.fFilteringTest = false;
     config.fTimeoutIsInstant = false;
@@ -111,25 +103,27 @@ HRESULT CreateConfigFromCommandLine(ClientCmdLineArgs& args, StunClientLogicConf
     socketconfig.addrLocal = CSocketAddress(0, 0);
 
     ChkIfA(pConfig == NULL, E_INVALIDARG);
-    ChkIfA(pSocketConfig==NULL, E_INVALIDARG);
-
+    ChkIfA(pSocketConfig == NULL, E_INVALIDARG);
 
     // family (protocol type) ------------------------------------
-    if (StringHelper::IsNullOrEmpty(args.strFamily.c_str())==false)
+    if (StringHelper::IsNullOrEmpty(args.strFamily.c_str()) == false)
     {
         int optvalue = atoi(args.strFamily.c_str());
         switch (optvalue)
         {
-            case 4: socketconfig.family = AF_INET; break;
-            case 6: socketconfig.family = AF_INET6; break;
-            default:
-            {
+            case 4:
+                socketconfig.family = AF_INET;
+                break;
+            case 6:
+                socketconfig.family = AF_INET6;
+                break;
+            default: {
                 Logging::LogMsg(LL_ALWAYS, "Family option must be either 4 or 6");
                 Chk(E_INVALIDARG);
             }
         }
     }
-    
+
     // protocol --------------------------------------------
     StringHelper::ToLower(args.strProtocol);
     if (StringHelper::IsNullOrEmpty(args.strProtocol.c_str()) == false)
@@ -139,7 +133,7 @@ HRESULT CreateConfigFromCommandLine(ClientCmdLineArgs& args, StunClientLogicConf
             Logging::LogMsg(LL_ALWAYS, "Only udp and tcp are supported protocol versions");
             Chk(E_INVALIDARG);
         }
-        
+
         if (args.strProtocol == "tcp")
         {
             fTCP = true;
@@ -164,26 +158,24 @@ HRESULT CreateConfigFromCommandLine(ClientCmdLineArgs& args, StunClientLogicConf
         remoteport = DEFAULT_STUN_PORT;
     }
 
-
     // remote server -----------------------------------------
     if (StringHelper::IsNullOrEmpty(args.strRemoteServer.c_str()))
     {
         Logging::LogMsg(LL_ALWAYS, "No server address specified");
         Chk(E_INVALIDARG);
     }
-    
+
     hr = ::ResolveHostName(args.strRemoteServer.c_str(), socketconfig.family, false, &config.addrServer);
-    
+
     if (FAILED(hr))
     {
         Logging::LogMsg(LL_ALWAYS, "Unable to resolve hostname for %s", args.strRemoteServer.c_str());
         Chk(hr);
     }
-    
+
     config.addrServer.ToStringBuffer(szIP, ARRAYSIZE(szIP));
     Logging::LogMsg(LL_DEBUG, "Resolved %s to %s", args.strRemoteServer.c_str(), szIP);
     config.addrServer.SetPort(remoteport);
-
 
     // local port --------------------------------------------
     if (StringHelper::IsNullOrEmpty(args.strLocalPort.c_str()) == false)
@@ -218,7 +210,7 @@ HRESULT CreateConfigFromCommandLine(ClientCmdLineArgs& args, StunClientLogicConf
         }
         else
         {
-            socketconfig.addrLocal = CSocketAddress(0,localport);
+            socketconfig.addrLocal = CSocketAddress(0, localport);
         }
     }
 
@@ -249,14 +241,9 @@ HRESULT CreateConfigFromCommandLine(ClientCmdLineArgs& args, StunClientLogicConf
         }
     }
 
-
-
 Cleanup:
     return hr;
 }
-
-
-
 
 void NatBehaviorToString(NatBehavior behavior, std::string* pStr)
 {
@@ -264,12 +251,25 @@ void NatBehaviorToString(NatBehavior behavior, std::string* pStr)
 
     switch (behavior)
     {
-        case UnknownBehavior:  str="Unknown Behavior"; break;
-        case DirectMapping:  str="Direct Mapping"; break;
-        case EndpointIndependentMapping: str = "Endpoint Independent Mapping"; break;
-        case AddressDependentMapping: str = "Address Dependent Mapping"; break;
-        case AddressAndPortDependentMapping: str = "Address and Port Dependent Mapping"; break;
-        default: ASSERT(false); str = ""; break;
+        case UnknownBehavior:
+            str = "Unknown Behavior";
+            break;
+        case DirectMapping:
+            str = "Direct Mapping";
+            break;
+        case EndpointIndependentMapping:
+            str = "Endpoint Independent Mapping";
+            break;
+        case AddressDependentMapping:
+            str = "Address Dependent Mapping";
+            break;
+        case AddressAndPortDependentMapping:
+            str = "Address and Port Dependent Mapping";
+            break;
+        default:
+            ASSERT(false);
+            str = "";
+            break;
     }
 }
 
@@ -279,12 +279,25 @@ void NatFilteringToString(NatFiltering filtering, std::string* pStr)
 
     switch (filtering)
     {
-        case UnknownFiltering:  str="Unknown Behavior"; break;
-        case DirectConnectionFiltering:  str="Direct Mapping"; break;
-        case EndpointIndependentFiltering: str = "Endpoint Independent Filtering"; break;
-        case AddressDependentFiltering: str = "Address Dependent Filtering"; break;
-        case AddressAndPortDependentFiltering: str = "Address and Port Dependent Filtering"; break;
-        default: ASSERT(false); str = ""; break;
+        case UnknownFiltering:
+            str = "Unknown Behavior";
+            break;
+        case DirectConnectionFiltering:
+            str = "Direct Mapping";
+            break;
+        case EndpointIndependentFiltering:
+            str = "Endpoint Independent Filtering";
+            break;
+        case AddressDependentFiltering:
+            str = "Address Dependent Filtering";
+            break;
+        case AddressAndPortDependentFiltering:
+            str = "Address and Port Dependent Filtering";
+            break;
+        default:
+            ASSERT(false);
+            str = "";
+            break;
     }
 }
 
@@ -294,7 +307,7 @@ void DumpResults(StunClientLogicConfig& config, StunClientResults& results)
     const int buffersize = 100;
     std::string strResult;
 
-    Logging::LogMsg(LL_ALWAYS, "Binding test: %s", results.fBindingTestSuccess?"success":"fail");
+    Logging::LogMsg(LL_ALWAYS, "Binding test: %s", results.fBindingTestSuccess ? "success" : "fail");
     if (results.fBindingTestSuccess)
     {
         results.addrLocal.ToStringBuffer(szBuffer, buffersize);
@@ -307,7 +320,7 @@ void DumpResults(StunClientLogicConfig& config, StunClientResults& results)
     if (config.fBehaviorTest)
     {
 
-        Logging::LogMsg(LL_ALWAYS, "Behavior test: %s", results.fBehaviorTestSuccess?"success":"fail");
+        Logging::LogMsg(LL_ALWAYS, "Behavior test: %s", results.fBehaviorTestSuccess ? "success" : "fail");
         if (results.fBehaviorTestSuccess)
         {
             NatBehaviorToString(results.behavior, &strResult);
@@ -317,7 +330,7 @@ void DumpResults(StunClientLogicConfig& config, StunClientResults& results)
 
     if (config.fFilteringTest)
     {
-        Logging::LogMsg(LL_ALWAYS, "Filtering test: %s", results.fFilteringTestSuccess?"success":"fail");
+        Logging::LogMsg(LL_ALWAYS, "Filtering test: %s", results.fFilteringTestSuccess ? "success" : "fail");
         if (results.fFilteringTestSuccess)
         {
             NatFilteringToString(results.filtering, &strResult);
@@ -326,10 +339,9 @@ void DumpResults(StunClientLogicConfig& config, StunClientResults& results)
     }
 }
 
-
 void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconfig)
 {
-    
+
     HRESULT hr = S_OK;
     CStunSocket stunsocket;
     CStunClientLogic clientlogic;
@@ -341,23 +353,21 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
     int ret;
     size_t bytes_sent, bytes_recv;
     size_t bytes_to_send, max_bytes_recv, remaining;
-    uint8_t* pData=NULL;
+    uint8_t* pData = NULL;
     size_t readsize;
     CStunMessageReader reader;
     StunClientResults results;
-    
-   
-    hr= clientlogic.Initialize(config);
+
+    hr = clientlogic.Initialize(config);
     if (FAILED(hr))
     {
         Logging::LogMsg(LL_ALWAYS, "clientlogic.Initialize failed (hr == %x)", hr);
         Chk(hr);
     }
-    
-    
+
     while (true)
     {
-    
+
         stunsocket.Close();
         hr = stunsocket.TCPInit(socketconfig.addrLocal, RolePP, true);
         if (FAILED(hr))
@@ -365,9 +375,9 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
             Logging::LogMsg(LL_ALWAYS, "Unable to create local socket for TCP connection (hr == %x)", hr);
             Chk(hr);
         }
-        
+
         hrRet = clientlogic.GetNextMessage(spMsg, &addrDest, ::GetMillisecondCounter());
-        
+
         if (hrRet == E_STUNCLIENT_RESULTS_READY)
         {
             // clean exit
@@ -376,33 +386,33 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
 
         // we should never get a "still waiting" return with TCP, because config.timeout is 0
         ASSERT(hrRet != E_STUNCLIENT_STILL_WAITING);
-        
+
         if (FAILED(hrRet))
         {
             Chk(hrRet);
         }
-        
+
         // connect to server
         sock = stunsocket.GetSocketHandle();
-        
+
         ret = ::connect(sock, addrDest.GetSockAddr(), addrDest.GetSockAddrLength());
-        
+
         if (ret == -1)
         {
             hrResult = ERRNOHR;
             Logging::LogMsg(LL_ALWAYS, "Can't connect to server (hr == %x)", hrResult);
             Chk(hrResult);
         }
-        
+
         Logging::LogMsg(LL_DEBUG, "Connected to server");
-        
+
         bytes_to_send = (int)(spMsg->GetSize());
-        
+
         bytes_sent = 0;
         pData = spMsg->GetData();
         while (bytes_sent < bytes_to_send)
         {
-            ret = ::send(sock, pData+bytes_sent, bytes_to_send-bytes_sent, 0);
+            ret = ::send(sock, pData + bytes_sent, bytes_to_send - bytes_sent, 0);
             if (ret < 0)
             {
                 hrResult = ERRNOHR;
@@ -411,10 +421,9 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
             }
             bytes_sent += ret;
         }
-        
+
         Logging::LogMsg(LL_DEBUG, "Request sent - waiting for response");
-        
-        
+
         // consume the response
         reader.Reset();
         reader.GetStream().Attach(spMsgReader, true);
@@ -422,24 +431,24 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
         bytes_recv = 0;
         max_bytes_recv = spMsg->GetAllocatedSize();
         remaining = max_bytes_recv;
-        
+
         while (remaining > 0)
         {
             readsize = reader.HowManyBytesNeeded();
-            
+
             if (readsize == 0)
             {
                 break;
             }
-            
+
             if (readsize > remaining)
             {
                 // technically an error, but the client logic will figure it out
                 ASSERT(false);
                 break;
             }
-            
-            ret = ::recv(sock, pData+bytes_recv, readsize, 0);
+
+            ret = ::recv(sock, pData + bytes_recv, readsize, 0);
             if (ret == 0)
             {
                 // server cut us off before we got all the bytes we thought we were supposed to get?
@@ -453,31 +462,28 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
                 Logging::LogMsg(LL_ALWAYS, "Recv failed (hr == %x)", hrResult);
                 Chk(hrResult);
             }
-            
-            reader.AddBytes(pData+bytes_recv, ret);
+
+            reader.AddBytes(pData + bytes_recv, ret);
             bytes_recv += ret;
             remaining = max_bytes_recv - bytes_recv;
             spMsg->SetSize(bytes_recv);
         }
-        
-        
+
         // now feed the response into the client logic
         stunsocket.UpdateAddresses();
         addrLocal = stunsocket.GetLocalAddress();
         clientlogic.ProcessResponse(spMsg, addrDest, addrLocal);
     }
-    
+
     stunsocket.Close();
 
     results.Init();
     clientlogic.GetResults(&results);
     ::DumpResults(config, results);
-    
+
 Cleanup:
     return;
-    
 }
-
 
 HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& socketconfig)
 {
@@ -497,9 +503,8 @@ HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& s
 
     CStunClientLogic clientlogic;
 
-
     hr = clientlogic.Initialize(config);
-    
+
     if (FAILED(hr))
     {
         Logging::LogMsg(LL_ALWAYS, "Unable to initialize client: (error = x%x)", hr);
@@ -512,7 +517,6 @@ HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& s
         Logging::LogMsg(LL_ALWAYS, "Unable to create local socket: (error = x%x)", hr);
         Chk(hr);
     }
-    
 
     stunSocket.EnablePktInfoOption(true);
 
@@ -530,7 +534,7 @@ HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& s
         {
             addrDest.ToString(&strAddr);
             ASSERT(spMsg->GetSize() > 0);
-            
+
             if (Logging::GetLogLevel() >= LL_DEBUG)
             {
                 std::string strAddr;
@@ -560,7 +564,6 @@ HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& s
             Chk(hrRet);
         }
 
-
         // now wait for a response
         spMsg->SetSize(0);
         FD_ZERO(&set);
@@ -568,7 +571,7 @@ HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& s
         tv.tv_usec = 500000; // half-second
         tv.tv_sec = config.timeoutSeconds;
 
-        ret = select(sock+1, &set, NULL, NULL, &tv);
+        ret = select(sock + 1, &set, NULL, NULL, &tv);
         if (ret > 0)
         {
             ret = ::recvfromex(sock, spMsg->GetData(), spMsg->GetAllocatedSize(), MSG_DONTWAIT, &addrRemote, &addrLocal);
@@ -584,22 +587,14 @@ HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& s
         }
     }
 
-
     results.Init();
     clientlogic.GetResults(&results);
 
     DumpResults(config, results);
 
-
 Cleanup:
     return hr;
 }
-
-
-
-
-
-
 
 int main(int argc, char** argv)
 {
@@ -609,17 +604,15 @@ int main(int argc, char** argv)
     ClientSocketConfig socketconfig;
     bool fError = false;
     uint32_t loglevel = LL_ALWAYS;
-    
 
 #ifdef DEBUG
     loglevel = LL_DEBUG;
 #endif
     Logging::SetLogLevel(loglevel);
-    
 
     cmdline.AddNonOption(&args.strRemoteServer);
     cmdline.AddNonOption(&args.strRemotePort);
-    cmdline.AddOption("localaddr", required_argument,  &args.strLocalAddr);
+    cmdline.AddOption("localaddr", required_argument, &args.strLocalAddr);
     cmdline.AddOption("localport", required_argument, &args.strLocalPort);
     cmdline.AddOption("mode", required_argument, &args.strMode);
     cmdline.AddOption("family", required_argument, &args.strFamily);
@@ -632,21 +625,20 @@ int main(int argc, char** argv)
         PrintUsage(true);
         return -1;
     }
-    
+
     cmdline.ParseCommandLine(argc, argv, 1, &fError);
-    
+
     if (args.strHelp.length() > 0)
     {
         PrintUsage(false);
         return -2;
     }
-    
+
     if (fError)
     {
         PrintUsage(true);
         return -3;
     }
-    
 
     if (args.strVerbosity.length() > 0)
     {
@@ -665,7 +657,7 @@ int main(int argc, char** argv)
     }
 
     DumpConfig(config, socketconfig);
-    
+
     if (socketconfig.socktype == SOCK_STREAM)
     {
         TcpClientLoop(config, socketconfig);
