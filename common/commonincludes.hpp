@@ -14,13 +14,11 @@
    limitations under the License.
 */
 
-
 #ifndef STUNSERVER_COMMON_COMMONINCLUDES_H
 #define STUNSERVER_COMMON_COMMONINCLUDES_H
 
 // Fix for Lion (http://www.opensource.apple.com/source/xnu/xnu-1699.24.8/bsd/netinet6/in6.h)
 #define __APPLE_USE_RFC_3542
-
 
 #if __linux || __linux__ || __gnu_linux__ || linux
 #define IS_LINUX
@@ -48,15 +46,11 @@
 #include <math.h>
 #include <sys/termios.h>
 
-#include <boost/shared_ptr.hpp>
-#include <boost/scoped_array.hpp>
-#include <boost/scoped_ptr.hpp>
-
 #include <map>
 #include <vector>
 #include <list>
 #include <string>
-
+#include <cassert>
 
 #ifdef IS_LINUX
 #define HAS_EPOLL
@@ -65,60 +59,31 @@
 
 #include <poll.h>
 
-
 #include <pthread.h>
 
+#ifdef DEBUG_MODE
+#define DEBUG 1
+#elif not defined(NDEBUG)
+#define NDEBUG 1
+#endif
 
 #if !defined(DEBUG) && !defined(NDEBUG)
 You_Didnt_Define_DEBUG_Or_NDEBUG g_compilererror[-1];
 #endif
 
-
-#if defined(DEBUG)
-
-#ifndef BOOST_ENABLE_ASSERT_HANDLER
-#define BOOST_ENABLE_ASSERT_HANDLER
-#endif
-
+#if DEBUG
+#define ASSERT(expr) assert(expr)
+#define VERIFY(expr) ASSERT(expr)
+#define ASSERTMSG(expr, msg) assert(expr&& msg)
 #else
-
-#ifndef BOOST_DISABLE_ASSERTS
-#define BOOST_DISABLE_ASSERTS
+#define ASSERT(expr)
+#define VERIFY(expr)
+#define ASSERTMSG(expr, msg)
 #endif
 
-#endif
-#include <boost/assert.hpp>
+#define ARRAYSIZE(arr) (sizeof(arr) / sizeof(*arr))
 
-#ifdef ASSERT
-#undef ASSERT
-#endif
-
-#ifdef VERIFY
-#undef VERIFY
-#endif
-
-
-#ifdef ASSERT_MSG
-#undef ASSERT_MSG
-#endif
-
-// older versions of BOOST don't have BOOST_VERIFY
-#ifndef BOOST_VERIFY
-#define BOOST_VERIFY(expr) ((void)(expr))
-#endif
-
-#define ASSERT(expr) BOOST_ASSERT(expr)
-#define VERIFY(expr) BOOST_VERIFY(expr)
-#define ASSERTMSG(expr, msg) BOOST_ASSERT_MSG (expr, msg)
-
-#define ARRAYSIZE(arr) (sizeof(arr)/sizeof(*arr))
-
-inline void cta_noop(const char* psz)
-{
-    ;
-}
-
-#define COMPILE_TIME_ASSERT(x) {char name$$[(x)?1:-1]; cta_noop(name$$);}
+#define COMPILE_TIME_ASSERT(x) static_assert(x, #x)
 
 #ifndef UNREFERENCED_VARIABLE
 #define UNREFERENCED_VARIABLE(unrefparam) ((void)unrefparam)
@@ -129,17 +94,11 @@ inline void cta_noop(const char* psz)
 #include "hresult.h"
 #include "chkmacros.h"
 
-
 // ---------------------------------------------
-// Unless there's good reason, put additional header files after hresult.h and chkmacros.h
-#include "refcountobject.h"
+// Unless there's good reason, put additional header files after hresult.h and
+// chkmacros.h
 #include "objectfactory.h"
 
-
-
 #include "logger.h"
-
-
-
 
 #endif

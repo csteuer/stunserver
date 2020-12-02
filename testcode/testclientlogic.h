@@ -14,68 +14,60 @@
    limitations under the License.
 */
 
-
 #ifndef TESTCLIENTLOGIC_H
-#define	TESTCLIENTLOGIC_H
+#define TESTCLIENTLOGIC_H
+
+#include <memory>
 
 #include "unittest.h"
-
-
+#include "hresult.h"
+#include "socketaddress.h"
+#include "buffer.h"
+#include "stunclientlogic.h"
+#include "messagehandler.h"
 #include "testmessagehandler.h"
-
 
 class CTestClientLogic : public IUnitTest
 {
 private:
-    
     CSocketAddress _addrServerPP;
     CSocketAddress _addrServerPA;
     CSocketAddress _addrServerAP;
     CSocketAddress _addrServerAA;
-    
+
     CSocketAddress _addrLocal;
-    
+
     CSocketAddress _addrMappedPP; // what PP returns
     CSocketAddress _addrMappedPA; // what PA returns
     CSocketAddress _addrMappedAP; // what AP returns
     CSocketAddress _addrMappedAA; // what AA returns
-    
+
     bool _fAllowChangeRequestAA;
     bool _fAllowChangeRequestPA;
-    
-    TransportAddressSet _tsa;
-    
-    
-    boost::shared_ptr<CStunClientLogic> _spClientLogic;
-    
 
-        
+    TransportAddressSet _tsa;
+
+    std::shared_ptr<CStunClientLogic> _spClientLogic;
+
     HRESULT ValidateBindingRequest(CRefCountedBuffer& spMsg, StunTransactionId* pTransId);
-    HRESULT GenerateBindingResponseMessage(const CSocketAddress& addrMapped , const StunTransactionId& transid, CRefCountedBuffer& spMsg);
-    
+    HRESULT GenerateBindingResponseMessage(const CSocketAddress& addrMapped, const StunTransactionId& transid, CRefCountedBuffer& spMsg);
+
     HRESULT Test1();
-    
-    
+
     HRESULT TestBehaviorAndFiltering(bool fBehaviorTest, NatBehavior behavior, bool fFilteringTest, NatFiltering filtering);
-    
+
     HRESULT CommonInit(NatBehavior behavior, NatFiltering filtering);
 
-    
     HRESULT GetMappedAddressForDestinationAddress(const CSocketAddress& addrDest, CSocketAddress* pAddrMapped);
     SocketRole GetSocketRoleForDestinationAddress(const CSocketAddress& addrDest);
-    
+
 public:
-    
-    CTestClientLogic() {;}
-    ~CTestClientLogic() {;}
-    
+    CTestClientLogic() { ; }
+    ~CTestClientLogic() { ; }
+
     HRESULT Run();
-    
-    UT_DECLARE_TEST_NAME("CTestClientLogic");    
-    
+
+    UT_DECLARE_TEST_NAME("CTestClientLogic");
 };
 
-
-
-#endif	/* TESTCLIENTLOGIC_H */
-
+#endif /* TESTCLIENTLOGIC_H */

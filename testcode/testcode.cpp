@@ -14,7 +14,6 @@
    limitations under the License.
 */
 
-
 #include "commonincludes.hpp"
 #include "stuncore.h"
 
@@ -42,8 +41,7 @@ void ReaderFuzzTest()
     CStunMessageReader reader;
     int ret;
 
-
-    messagesize=0;
+    messagesize = 0;
     while (messagesize < 1500)
     {
         ret = getchar();
@@ -51,41 +49,37 @@ void ReaderFuzzTest()
         {
             break;
         }
-        
+
         unsigned char ch = (unsigned char)ret;
         msgbytes[messagesize] = ch;
         messagesize++;
     }
-    
+
     printf("Processing %d bytes\n", (int)messagesize);
     reader.AddBytes(msgbytes, messagesize);
-    
 
     printf("Test Run (%u)\n", GetMillisecondCounter());
-   
-    
+
     exit(0);
-
 }
-
 
 void RunUnitTests()
 {
     std::vector<IUnitTest*> vecTests;
-    
-    boost::shared_ptr<CTestDataStream> spTestDataStream(new CTestDataStream);
-    boost::shared_ptr<CTestReader> spTestReader(new CTestReader);
-    boost::shared_ptr<CTestBuilder> spTestBuilder(new CTestBuilder);
-    boost::shared_ptr<CTestIntegrity> spTestIntegrity(new CTestIntegrity);
-    boost::shared_ptr<CTestMessageHandler> spTestMessageHandler(new CTestMessageHandler);
-    boost::shared_ptr<CTestCmdLineParser> spTestCmdLineParser(new CTestCmdLineParser);
-    boost::shared_ptr<CTestClientLogic> spTestClientLogic(new CTestClientLogic);
-    boost::shared_ptr<CTestRecvFromExIPV4> spTestRecvFromEx4(new CTestRecvFromExIPV4);
-    boost::shared_ptr<CTestRecvFromExIPV6> spTestRecvFromEx6(new CTestRecvFromExIPV6);
-    boost::shared_ptr<CTestFastHash> spTestFastHash(new CTestFastHash);
-    boost::shared_ptr<CTestPolling> spTestPolling(new CTestPolling);
-    boost::shared_ptr<CTestAtomicHelpers> spTestAtomicHelpers(new CTestAtomicHelpers);
-    boost::shared_ptr<CTestRateLimiter> spTestRateLimiter(new CTestRateLimiter);
+
+    std::shared_ptr<CTestDataStream> spTestDataStream(new CTestDataStream);
+    std::shared_ptr<CTestReader> spTestReader(new CTestReader);
+    std::shared_ptr<CTestBuilder> spTestBuilder(new CTestBuilder);
+    std::shared_ptr<CTestIntegrity> spTestIntegrity(new CTestIntegrity);
+    std::shared_ptr<CTestMessageHandler> spTestMessageHandler(new CTestMessageHandler);
+    std::shared_ptr<CTestCmdLineParser> spTestCmdLineParser(new CTestCmdLineParser);
+    std::shared_ptr<CTestClientLogic> spTestClientLogic(new CTestClientLogic);
+    std::shared_ptr<CTestRecvFromExIPV4> spTestRecvFromEx4(new CTestRecvFromExIPV4);
+    std::shared_ptr<CTestRecvFromExIPV6> spTestRecvFromEx6(new CTestRecvFromExIPV6);
+    std::shared_ptr<CTestFastHash> spTestFastHash(new CTestFastHash);
+    std::shared_ptr<CTestPolling> spTestPolling(new CTestPolling);
+    std::shared_ptr<CTestAtomicHelpers> spTestAtomicHelpers(new CTestAtomicHelpers);
+    std::shared_ptr<CTestRateLimiter> spTestRateLimiter(new CTestRateLimiter);
 
     vecTests.push_back(spTestDataStream.get());
     vecTests.push_back(spTestReader.get());
@@ -101,14 +95,12 @@ void RunUnitTests()
     vecTests.push_back(spTestAtomicHelpers.get());
     vecTests.push_back(spTestRateLimiter.get());
 
-
     for (size_t index = 0; index < vecTests.size(); index++)
     {
         HRESULT hr = vecTests[index]->Run();
-        printf("Result of %s: %s\n", vecTests[index]->GetName(), SUCCEEDED(hr)?"PASS": "FAIL");
+        printf("Result of %s: %s\n", vecTests[index]->GetName(), SUCCEEDED(hr) ? "PASS" : "FAIL");
     }
 }
-
 
 void PrettyPrintTest()
 {
@@ -116,7 +108,7 @@ void PrettyPrintTest()
     char* buffer = new char[MAX_TEXT_SIZE];
 
     size_t messagesize = 0;
-    
+
     while (messagesize < MAX_TEXT_SIZE)
     {
         int ret = getchar();
@@ -124,14 +116,14 @@ void PrettyPrintTest()
         {
             break;
         }
-        
+
         buffer[messagesize] = (signed char)(ret);
         messagesize++;
-    }    
-    
+    }
+
     ::PrettyPrint(buffer, 78);
-    
-    delete [] buffer;
+
+    delete[] buffer;
 }
 
 int main(int argc, char** argv)
@@ -141,12 +133,11 @@ int main(int argc, char** argv)
     std::string strPP;
     bool fParseError = false;
 
-    
     cmdline.AddOption("fuzz", no_argument, &strFuzz);
     cmdline.AddOption("pp", no_argument, &strPP);
-    
+
     cmdline.ParseCommandLine(argc, argv, 1, &fParseError);
-    
+
     if (strFuzz.size() > 0)
     {
         ReaderFuzzTest();
@@ -162,7 +153,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-
-
-
-

@@ -42,7 +42,7 @@ class CTCPStunThread
     CRefCountedPtr<IPolling> _spPolling;
     bool _fListenSocketsOnEpoll;
     
-    boost::shared_ptr<RateLimiter> _spLimiter;
+    std::shared_ptr<RateLimiter> _spLimiter;
     
     // epoll helpers
     HRESULT SetListenSocketsOnEpoll(bool fEnable);
@@ -115,7 +115,7 @@ public:
     
     // tsaListen are the set of addresses we listen to connections on (either 1 address or 4 addresses)
     // tsaHandler is what gets passed to the CStunRequestHandler for formation of the "other-address" attribute
-    HRESULT Init(const TransportAddressSet& tsaListen, const TransportAddressSet& tsaHandler, IStunAuth* pAuth, int maxConnections, boost::shared_ptr<RateLimiter>& spLimiter);
+    HRESULT Init(const TransportAddressSet& tsaListen, const TransportAddressSet& tsaHandler, IStunAuth* pAuth, int maxConnections, std::shared_ptr<RateLimiter>& spLimiter);
     HRESULT Start();
     HRESULT Stop();
 };

@@ -14,15 +14,11 @@
    limitations under the License.
 */
 
-
-
-
 #ifndef CBUFFER_H
 #define CBUFFER_H
 
-
-
-
+#include <memory>
+#include <hresult.h>
 
 class CBuffer
 {
@@ -30,39 +26,34 @@ private:
     uint8_t* _data;
     size_t _size;
     size_t _allocatedSize;
-    boost::scoped_array<uint8_t> _spAllocation;
+    std::unique_ptr<uint8_t[]> _spAllocation;
 
     // disallow copy and assignment.
     CBuffer(const CBuffer&);
     void operator=(const CBuffer& other);
 
-
 public:
-    CBuffer(); // deliberately makes the buffer null
+    CBuffer();    // deliberately makes the buffer null
     void Reset(); // releases current pointer
-
 
     CBuffer(size_t nSize);
     HRESULT InitWithAllocation(size_t size);
-
 
     CBuffer(uint8_t* pByteArray, size_t nByteArraySize, bool fCopy);
 
     HRESULT InitWithAllocAndCopy(uint8_t* pByteArray, size_t nByteArraySize);
     HRESULT InitNoAlloc(uint8_t* pByteArray, size_t nByteArraySize);
 
-    inline size_t GetSize() {return _size;}
-    inline size_t GetAllocatedSize() {return _allocatedSize;}
+    inline size_t GetSize() { return _size; }
+    inline size_t GetAllocatedSize() { return _allocatedSize; }
 
     HRESULT SetSize(size_t size);
 
-
-    inline uint8_t* GetData() {return _data;}
+    inline uint8_t* GetData() { return _data; }
 
     bool IsValid();
 };
 
-typedef boost::shared_ptr<CBuffer> CRefCountedBuffer;
-
+typedef std::shared_ptr<CBuffer> CRefCountedBuffer;
 
 #endif

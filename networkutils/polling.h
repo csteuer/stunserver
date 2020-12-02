@@ -15,8 +15,12 @@
 */
 
 #ifndef POLLING_H
-#define	POLLING_H
+#define POLLING_H
 
+#include <cstdint>
+
+#include "refcountobject.h"
+#include "hresult.h"
 
 struct PollEvent
 {
@@ -24,16 +28,14 @@ struct PollEvent
     uint32_t eventflags;
 };
 
-
 // event flags
-const uint32_t IPOLLING_READ =         0x01 << 0;
-const uint32_t IPOLLING_WRITE =        0x01 << 1;
-const uint32_t IPOLLING_EDGETRIGGER =  0x01 << 2;
-const uint32_t IPOLLING_RDHUP =        0x01 << 3;
-const uint32_t IPOLLING_HUP =          0x01 << 4;
-const uint32_t IPOLLING_PRI =          0x01 << 5;
-const uint32_t IPOLLING_ERROR =        0x01 << 6;
-
+const uint32_t IPOLLING_READ = 0x01 << 0;
+const uint32_t IPOLLING_WRITE = 0x01 << 1;
+const uint32_t IPOLLING_EDGETRIGGER = 0x01 << 2;
+const uint32_t IPOLLING_RDHUP = 0x01 << 3;
+const uint32_t IPOLLING_HUP = 0x01 << 4;
+const uint32_t IPOLLING_PRI = 0x01 << 5;
+const uint32_t IPOLLING_ERROR = 0x01 << 6;
 
 class IPolling : public IRefCounted
 {
@@ -46,14 +48,10 @@ public:
     virtual HRESULT WaitForNextEvent(PollEvent* pPollEvent, int timeoutMilliseconds) = 0;
 };
 
-
-const uint32_t IPOLLING_TYPE_BEST  = 0x01 << 0;
+const uint32_t IPOLLING_TYPE_BEST = 0x01 << 0;
 const uint32_t IPOLLING_TYPE_EPOLL = 0x01 << 1;
-const uint32_t IPOLLING_TYPE_POLL  = 0x01 << 2;
+const uint32_t IPOLLING_TYPE_POLL = 0x01 << 2;
 
 HRESULT CreatePollingInstance(uint32_t type, size_t maxSockets, IPolling** ppPolling);
 
-
-
-#endif	/* POLLING_H */
-
+#endif /* POLLING_H */

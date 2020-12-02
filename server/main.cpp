@@ -16,9 +16,6 @@
 
 #include "commonincludes.hpp"
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
 #include "stuncore.h"
 #include "server.h"
 #include "tcpserver.h"
@@ -31,15 +28,18 @@
 #include "oshelper.h"
 #include "stringhelper.h"
 
-
 // these are auto-generated files made from markdown sources.  See ../resources
 #include "stunserver.txtcode"
 #include "stunserver_lite.txtcode"
 #include "resolvehostname.h"
 
+#ifdef WITH_CONFIGFILE_SUPPORT
+#define BOOST_BIND_GLOBAL_PLACEHOLDERS
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 using namespace boost::property_tree;
-
+#endif
 
 void PrintUsage(bool fSummaryUsage)
 {
@@ -54,7 +54,6 @@ void PrintUsage(bool fSummaryUsage)
 
     PrettyPrint(psz, width);
 }
-
 
 // Because strerror_r has two versions (one that returns an int and another that returns char*)
 // we wrap the result into an overloaded function
@@ -72,19 +71,18 @@ char* strerror_helper(char* pszResult, char*, int)
     return pszResult;
 }
 
-
 void LogHR(uint16_t level, HRESULT hr)
 {
     uint32_t facility = HRESULT_FACILITY(hr);
     char msg[400];
     const char* pMsg = NULL;
     bool fGotMsg = false;
-    
+
     if (facility == FACILITY_ERRNO)
     {
         msg[0] = '\0';
         int err = (int)(HRESULT_CODE(hr));
-        
+
         pMsg = strerror_helper(strerror_r(err, msg, ARRAYSIZE(msg)), msg, err);
 
         if (pMsg)
@@ -92,25 +90,22 @@ void LogHR(uint16_t level, HRESULT hr)
             Logging::LogMsg(level, "Error: %s", pMsg);
             fGotMsg = true;
         }
-        
+
         if (err == EADDRINUSE)
         {
-            Logging::LogMsg(level, 
-                "This error likely means another application is listening on one\n"
-                "or more of the same ports you are attempting to configure this\n"
-                "server to listen on.  Run \"netstat -a -p -t -u\" to see a list\n"
-                "of all ports in use and associated process id for each");
+            Logging::LogMsg(level,
+                            "This error likely means another application is listening on one\n"
+                            "or more of the same ports you are attempting to configure this\n"
+                            "server to listen on.  Run \"netstat -a -p -t -u\" to see a list\n"
+                            "of all ports in use and associated process id for each");
         }
-        
     }
-    
+
     if (fGotMsg == false)
     {
         Logging::LogMsg(level, "Error: %x", hr);
     }
 }
-
-
 
 struct StartupArgs
 {
@@ -127,9 +122,10 @@ struct StartupArgs
     std::string strVerbosity;
     std::string strMaxConnections;
     std::string strDosProtect;
+#ifdef WITH_CONFIGFILE_SUPPORT
     std::string strConfigFile;
+#endif
     std::string strReuseAddr;
-    
 };
 
 #define PRINTARG(member) Logging::LogMsg(LL_DEBUG, "%s = %s", #member, args.member.length() ? args.member.c_str() : "<empty>");
@@ -154,12 +150,9 @@ void DumpStartupArgs(StartupArgs& args)
     Logging::LogMsg(LL_DEBUG, "--------------------------\n");
 }
 
-
-
-void DumpConfig(CStunServerConfig &config)
+void DumpConfig(CStunServerConfig& config)
 {
     std::string strSocket;
-
 
     if (config.fHasPP)
     {
@@ -181,31 +174,29 @@ void DumpConfig(CStunServerConfig &config)
         config.addrAA.ToString(&strSocket);
         Logging::LogMsg(LL_DEBUG, "AA = %s", strSocket.c_str());
     }
-    
+
     if (config.addrPrimaryAdvertised.IsIPAddressZero() == false)
     {
         config.addrPrimaryAdvertised.ToString(&strSocket);
         Logging::LogMsg(LL_DEBUG, "Primary IP will be advertised as %s", strSocket.c_str());
     }
-    
+
     if (config.addrAlternateAdvertised.IsIPAddressZero() == false)
     {
         config.addrAlternateAdvertised.ToString(&strSocket);
         Logging::LogMsg(LL_DEBUG, "Alternate IP will be advertised as %s", strSocket.c_str());
     }
-    
+
     Logging::LogMsg(LL_DEBUG, "Protocol = %s", config.fTCP ? "TCP" : "UDP");
-    if (config.fTCP && (config.nMaxConnections>0))
+    if (config.fTCP && (config.nMaxConnections > 0))
     {
         Logging::LogMsg(LL_DEBUG, "Max TCP Connections per thread: %d", config.nMaxConnections);
     }
 }
 
-
 HRESULT ResolveAdapterName(bool fPrimary, int family, std::string& strAdapterName, uint16_t port, CSocketAddress* pAddr)
 {
     HRESULT hr = S_OK;
-
 
     if (strAdapterName.length() == 0)
     {
@@ -229,8 +220,6 @@ HRESULT ResolveAdapterName(bool fPrimary, int family, std::string& strAdapterNam
     return hr;
 }
 
-
-
 HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig* pConfigOut)
 {
     HRESULT hr = S_OK;
@@ -251,14 +240,11 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
         Basic,
         Full
     };
-    ServerMode mode=Basic;
+    ServerMode mode = Basic;
 
     StartupArgs args = argsIn;
 
-
-
     ChkIfA(pConfigOut == NULL, E_INVALIDARG);
-
 
     // normalize the args.  The "trim" is not needed for command line args, but will be useful when we have an "init file" for initializing the server
     StringHelper::ToLower(args.strMode);
@@ -276,11 +262,9 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
 
     StringHelper::ToLower(args.strProtocol);
     StringHelper::Trim(args.strProtocol);
-    
+
     StringHelper::Trim(args.strPrimaryAdvertised);
     StringHelper::Trim(args.strAlternateAdvertised);
-
-
 
     // ---- MODE ----------------------------------------------------------
     if (args.strMode.length() > 0)
@@ -299,7 +283,6 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
             Chk(E_INVALIDARG);
         }
     }
-
 
     // ---- FAMILY --------------------------------------------------------
     family = AF_INET;
@@ -328,11 +311,10 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
             Logging::LogMsg(LL_ALWAYS, "Protocol argument must be 'udp' or 'tcp'. 'tls' is not supported yet");
             Chk(E_INVALIDARG);
         }
-        
+
         config.fTCP = (args.strProtocol == "tcp");
     }
-    
-    
+
     // ---- MAX Connections -----------------------------------------------------
     nMaxConnections = 0;
     if (args.strMaxConnections.length() > 0)
@@ -352,7 +334,6 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
         }
         config.nMaxConnections = nMaxConnections;
     }
-
 
     // ---- PRIMARY PORT --------------------------------------------------------
     nPrimaryPort = DEFAULT_STUN_PORT;
@@ -384,9 +365,7 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
         Chk(E_INVALIDARG);
     }
 
-
     // ---- Adapters and mode adjustment
-
 
     fHasAtLeastTwoAdapters = ::HasAtLeastTwoAdapters(family);
 
@@ -423,7 +402,7 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
             config.fHasPP = true;
         }
     }
-    else  // Full mode
+    else // Full mode
     {
         CSocketAddress addrPrimary;
         CSocketAddress addrAlternate;
@@ -452,12 +431,11 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
             Chk(hr);
         }
 
-        if  (addrPrimary.IsSameIP(addrAlternate))
+        if (addrPrimary.IsSameIP(addrAlternate))
         {
             Logging::LogMsg(LL_ALWAYS, "Error - Primary interface and Alternate Interface appear to have the same IP address. Full mode requires two IP addresses that are unique");
             Chk(E_INVALIDARG);
         }
-        
 
         config.addrPP = addrPrimary;
         config.addrPP.SetPort(portPrimary);
@@ -474,13 +452,11 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
         config.addrAA = addrAlternate;
         config.addrAA.SetPort(portAlternate);
         config.fHasAA = true;
-
     }
-
 
     // ---- Address advertisement --------------------------------------------------------
     // handle the advertised address parameters and make sure they are valid IP address strings
-    
+
     if (!StringHelper::IsNullOrEmpty(pszPrimaryAdvertised))
     {
         hr = ::NumericIPToAddress(family, pszPrimaryAdvertised, &config.addrPrimaryAdvertised);
@@ -490,7 +466,7 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
             Chk(hr);
         }
     }
-    
+
     if (!StringHelper::IsNullOrEmpty(pszAltAdvertised))
     {
         if (mode != Full)
@@ -498,7 +474,7 @@ HRESULT BuildServerConfigurationFromArgs(StartupArgs& argsIn, CStunServerConfig*
             Logging::LogMsg(LL_ALWAYS, "Error. --altadvertised was specified, but --mode param was not set to FULL.");
             ChkIf(config.fHasAA, E_INVALIDARG);
         }
-        
+
         hr = ::NumericIPToAddress(family, pszAltAdvertised, &config.addrAlternateAdvertised);
         if (FAILED(hr))
         {
@@ -520,7 +496,6 @@ Cleanup:
     return hr;
 }
 
-
 HRESULT ParseCommandLineArgs(int argc, char** argv, int startindex, StartupArgs* pStartupArgs)
 {
     CCmdLineParser cmdline;
@@ -540,7 +515,9 @@ HRESULT ParseCommandLineArgs(int argc, char** argv, int startindex, StartupArgs*
     cmdline.AddOption("help", no_argument, &pStartupArgs->strHelp);
     cmdline.AddOption("verbosity", required_argument, &pStartupArgs->strVerbosity);
     cmdline.AddOption("ddp", no_argument, &pStartupArgs->strDosProtect);
+#ifdef WITH_CONFIGFILE_SUPPORT
     cmdline.AddOption("configfile", required_argument, &pStartupArgs->strConfigFile);
+#endif
     cmdline.AddOption("reuseaddr", no_argument, &pStartupArgs->strReuseAddr);
 
     cmdline.ParseCommandLine(argc, argv, startindex, &fError);
@@ -548,13 +525,13 @@ HRESULT ParseCommandLineArgs(int argc, char** argv, int startindex, StartupArgs*
     return fError ? E_INVALIDARG : S_OK;
 }
 
-
+#ifdef WITH_CONFIGFILE_SUPPORT
 HRESULT LoadConfigsFromFile(const std::string& filename, std::vector<StartupArgs>& configurations)
 {
     ptree tree;
     bool error = false;
     std::string errorMessage;
-    
+
     /* EXAMPLE configuration file
      {
       "configurations": [
@@ -575,12 +552,12 @@ HRESULT LoadConfigsFromFile(const std::string& filename, std::vector<StartupArgs
       ]
     }
     */
-    
+
     try
     {
         read_json(filename, tree);
         ptree root = tree.get_child("configurations");
-        
+
         for (ptree::iterator itor = root.begin(); itor != root.end(); itor++)
         {
             const ptree& child = itor->second;
@@ -598,55 +575,54 @@ HRESULT LoadConfigsFromFile(const std::string& filename, std::vector<StartupArgs
             args.strMaxConnections = child.get("maxconn", "");
             args.strDosProtect = child.get("ddp", "");
             args.strReuseAddr = child.get("reuseaddr", "");
-            
+
             configurations.push_back(args);
         }
-    }
-    catch(ptree_error& ex1)
+    } catch (ptree_error& ex1)
     {
         Logging::LogMsg(LL_ALWAYS, "Error processing configuration file: %s", ex1.what());
         error = true;
     }
-    
+
     if (!error && configurations.size() == 0)
     {
         Logging::LogMsg(LL_ALWAYS, "File is valid json, but no configurations found");
         error = true;
     }
-    
+
     if (error)
     {
         configurations.clear();
         return E_FAIL;
     }
-    
+
     return S_OK;
 }
-    
+#endif
+
 HRESULT BlockSignal(int sig)
 {
     HRESULT hr = S_OK;
     int result = 0;
     sigset_t signalset;
     sigset_t oldset;
-    
+
     sigemptyset(&signalset);
     sigemptyset(&oldset);
-    
+
     sigaddset(&signalset, sig);
-    
+
     // blocks the signal on *this* thread and all child threads spawned with pthread_create
     result = pthread_sigmask(SIG_BLOCK, &signalset, &oldset);
-    
+
     if (result != 0)
     {
         hr = ERRNO_TO_HRESULT(result);
         Logging::LogMsg(LL_DEBUG, "BlockSignal: x%x", hr);
     }
-    
+
     return hr;
 }
-
 
 // after all the child threads have initialized with a signal mask that blocks SIGINT and SIGTERM
 // then the main thread UI can just sit on WaitForAppExitSignal and wait for CTRL-C to get pressed
@@ -659,9 +635,9 @@ void WaitForAppExitSignal()
         sigaddset(&sigs, SIGINT);
         sigaddset(&sigs, SIGTERM);
         int sig = 0;
-        
+
         int ret = sigwait(&sigs, &sig);
-        Logging::LogMsg(LL_DEBUG, "sigwait returns %d (errno==%d)", ret, (ret==-1)?0:errno);
+        Logging::LogMsg(LL_DEBUG, "sigwait returns %d (errno==%d)", ret, (ret == -1) ? 0 : errno);
         if ((sig == SIGINT) || (sig == SIGTERM))
         {
             break;
@@ -669,12 +645,10 @@ void WaitForAppExitSignal()
     }
 }
 
-
-
 HRESULT StartUDP(CRefCountedPtr<CStunServer>& spServer, CStunServerConfig& config)
 {
     HRESULT hr;
-    
+
     hr = CStunServer::CreateInstance(config, spServer.GetPointerPointer());
     if (FAILED(hr))
     {
@@ -690,14 +664,14 @@ HRESULT StartUDP(CRefCountedPtr<CStunServer>& spServer, CStunServerConfig& confi
         LogHR(LL_ALWAYS, hr);
         return hr;
     }
-    
+
     return S_OK;
 }
 
 HRESULT StartTCP(CRefCountedPtr<CTCPServer>& spTCPServer, CStunServerConfig& config)
 {
     HRESULT hr;
-    
+
     hr = CTCPServer::CreateInstance(config, spTCPServer.GetPointerPointer());
     if (FAILED(hr))
     {
@@ -705,7 +679,7 @@ HRESULT StartTCP(CRefCountedPtr<CTCPServer>& spTCPServer, CStunServerConfig& con
         LogHR(LL_ALWAYS, hr);
         return hr;
     }
-    
+
     hr = spTCPServer->Start();
     if (FAILED(hr))
     {
@@ -713,9 +687,8 @@ HRESULT StartTCP(CRefCountedPtr<CTCPServer>& spTCPServer, CStunServerConfig& con
         LogHR(LL_ALWAYS, hr);
         return hr;
     }
-    
+
     return S_OK;
-    
 }
 
 int main(int argc, char** argv)
@@ -724,28 +697,26 @@ int main(int argc, char** argv)
     StartupArgs args;
     std::vector<StartupArgs> argsVector;
     int serverindex = 1;
-    
+
     typedef CRefCountedPtr<CStunServer> UdpServerPtr;
     typedef CRefCountedPtr<CTCPServer> TcpServerPtr;
-    
+
     std::vector<UdpServerPtr> udpServers;
     std::vector<TcpServerPtr> tcpServers;
-    
-     // block sigpipe so that socket send calls from raising SIGPIPE
+
+    // block sigpipe so that socket send calls from raising SIGPIPE
     signal(SIGPIPE, SIG_IGN);
     BlockSignal(SIGPIPE);
-    
+
     // Block SIGTERM and SIGINT such that the child threads will never get that signal (so that subsequent WaitForAppExitSignal hooks on *this* thread)
     BlockSignal(SIGTERM);
     BlockSignal(SIGINT);
-    
 
 #ifdef DEBUG
     Logging::SetLogLevel(LL_DEBUG);
 #else
     Logging::SetLogLevel(LL_ALWAYS);
 #endif
-
 
     hr = ParseCommandLineArgs(argc, argv, 1, &args);
     if (FAILED(hr))
@@ -769,7 +740,8 @@ int main(int argc, char** argv)
             Logging::SetLogLevel((uint32_t)loglevel);
         }
     }
-    
+
+#ifdef WITH_CONFIGFILE_SUPPORT
     if (args.strConfigFile.empty() == false)
     {
         hr = LoadConfigsFromFile(args.strConfigFile, argsVector);
@@ -783,6 +755,9 @@ int main(int argc, char** argv)
     {
         argsVector.push_back(args);
     }
+#else
+    argsVector.push_back(args);
+#endif
 
     if (SUCCEEDED(hr))
     {
@@ -790,10 +765,10 @@ int main(int argc, char** argv)
         {
             CStunServerConfig config;
             StartupArgs args = *itor;
-            
+
             Logging::LogMsg(LL_DEBUG, "Starting server %d", serverindex);
             serverindex++;
-            
+
             ::DumpStartupArgs(args);
             hr = BuildServerConfigurationFromArgs(args, &config);
             if (FAILED(hr))
@@ -802,12 +777,12 @@ int main(int argc, char** argv)
                 break;
             }
             DumpConfig(config);
-            
+
             if (config.fTCP)
             {
                 TcpServerPtr spTcpServer;
                 hr = StartTCP(spTcpServer, config);
-                
+
                 if (SUCCEEDED(hr))
                 {
                     tcpServers.push_back(spTcpServer);
@@ -822,14 +797,13 @@ int main(int argc, char** argv)
                     udpServers.push_back(spUdpServer);
                 }
             }
-            
+
             if (FAILED(hr))
             {
                 break;
             }
         }
     }
-    
 
     if (SUCCEEDED(hr))
     {
@@ -837,24 +811,21 @@ int main(int argc, char** argv)
         WaitForAppExitSignal();
     }
 
-
     Logging::LogMsg(LL_DEBUG, "Server is exiting");
-    
-    
+
     for (std::vector<UdpServerPtr>::iterator itor = udpServers.begin(); itor != udpServers.end(); itor++)
     {
         Logging::LogMsg(LL_DEBUG, "Shutting down UDP server");
         UdpServerPtr server = *itor;
         server->Stop();
     }
-    
+
     for (std::vector<TcpServerPtr>::iterator itor = tcpServers.begin(); itor != tcpServers.end(); itor++)
     {
         Logging::LogMsg(LL_DEBUG, "Shutting down TCP server");
         TcpServerPtr server = *itor;
         server->Stop();
     }
-    
+
     return 0;
 }
-

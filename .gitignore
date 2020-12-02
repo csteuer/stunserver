@@ -13,3 +13,5 @@ stunclient.exe
 stunserver.exe
 stuntestcode.exe
 
+CMakeLists.txt.*
+build*/

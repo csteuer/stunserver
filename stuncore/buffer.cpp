@@ -14,17 +14,13 @@
    limitations under the License.
 */
 
-
-
 #include "commonincludes.hpp"
 #include "buffer.h"
 
-
-
-CBuffer::CBuffer() :
-_data(NULL),
-_size(0),
-_allocatedSize(0)
+CBuffer::CBuffer()
+: _data(NULL)
+, _size(0)
+, _allocatedSize(0)
 {
     ;
 }
@@ -35,15 +31,12 @@ void CBuffer::Reset()
     _data = NULL;
     _size = 0;
     _allocatedSize = 0;
-
 }
-
 
 CBuffer::CBuffer(size_t nSize)
 {
     InitWithAllocation(nSize);
 }
-
 
 HRESULT CBuffer::InitWithAllocation(size_t size)
 {
@@ -51,18 +44,19 @@ HRESULT CBuffer::InitWithAllocation(size_t size)
     Reset();
 
     // deliberately not checking for 0.  Ok to allocate a 0 byte array
-    boost::scoped_array<uint8_t> spAlloc(new uint8_t[size+2]); // add two bytes for null termination (makes debugging ascii and unicode strings easier), but these two bytes are invisible to the caller (not included in _allocatedSize)
+    // add two bytes for null termination (makes debugging ascii and unicode
+    // strings easier), but these two bytes are invisible to the caller (not
+    // included in _allocatedSize)
+    std::unique_ptr<uint8_t[]> spAlloc(new uint8_t[size + 2]);
 
-    _spAllocation.swap(spAlloc);
-
-    spAlloc.reset();
+    _spAllocation = std::move(spAlloc);
 
     _data = _spAllocation.get();
 
     if (_data)
     {
         _data[size] = 0;
-        _data[size+1] = 0;
+        _data[size + 1] = 0;
     }
 
     _size = (_data != NULL) ? size : 0;
@@ -106,7 +100,6 @@ HRESULT CBuffer::InitWithAllocAndCopy(uint8_t* pByteArray, size_t size)
     return hr;
 }
 
-
 CBuffer::CBuffer(uint8_t* pByteArray, size_t nByteArraySize, bool fCopy)
 {
 
@@ -119,9 +112,6 @@ CBuffer::CBuffer(uint8_t* pByteArray, size_t nByteArraySize, bool fCopy)
         InitWithAllocAndCopy(pByteArray, nByteArraySize);
     }
 }
-
-
-
 
 HRESULT CBuffer::SetSize(size_t size)
 {
@@ -137,13 +127,7 @@ HRESULT CBuffer::SetSize(size_t size)
     return hr;
 }
 
-
-
-
 bool CBuffer::IsValid()
 {
     return (_data != NULL);
 }
-
-
-

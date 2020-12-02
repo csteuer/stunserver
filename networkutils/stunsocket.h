@@ -15,9 +15,13 @@
 */
 
 #ifndef STUNSOCKET_H
-#define	STUNSOCKET_H
+#define STUNSOCKET_H
 
+#include <memory>
 
+#include "socketaddress.h"
+#include "socketrole.h"
+#include "hresult.h"
 
 class CStunSocket
 {
@@ -26,52 +30,47 @@ private:
     CSocketAddress _addrlocal;
     CSocketAddress _addrremote;
     SocketRole _role;
-    
-    CStunSocket(const CStunSocket&) {;}
-    void operator=(const CStunSocket&) {;}
-    
+
+    CStunSocket(const CStunSocket&) { ; }
+    void operator=(const CStunSocket&) { ; }
+
     HRESULT InitCommon(int socktype, const CSocketAddress& addrlocal, SocketRole role, bool fSetReuseFlag);
-    
+
     void Reset();
-    
+
     HRESULT EnablePktInfoImpl(int level, int option1, int option2, bool fEnable);
     HRESULT EnablePktInfo_IPV4(bool fEnable);
     HRESULT EnablePktInfo_IPV6(bool fEnable);
-    
-    HRESULT SetV6Only(int sock);
-    
-public:
 
+    HRESULT SetV6Only(int sock);
+
+public:
     CStunSocket();
     ~CStunSocket();
-    
+
     void Close();
-    
+
     bool IsValid();
-    
+
     HRESULT Attach(int sock);
     int Detach();
-    
+
     int GetSocketHandle() const;
     const CSocketAddress& GetLocalAddress() const;
     const CSocketAddress& GetRemoteAddress() const;
-    
+
     SocketRole GetRole() const;
     void SetRole(SocketRole role);
-    
+
     HRESULT EnablePktInfoOption(bool fEnable);
     HRESULT SetNonBlocking(bool fEnable);
-    
-    
+
     void UpdateAddresses();
-    
+
     HRESULT UDPInit(const CSocketAddress& local, SocketRole role, bool fSetReuseFlag);
     HRESULT TCPInit(const CSocketAddress& local, SocketRole role, bool fSetReuseFlag);
 };
 
-typedef boost::shared_ptr<CStunSocket> CRefCountedStunSocket;
+typedef std::shared_ptr<CStunSocket> CRefCountedStunSocket;
 
-
-
-#endif	/* STUNSOCKET_H */
-
+#endif /* STUNSOCKET_H */

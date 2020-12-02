@@ -14,7 +14,6 @@
    limitations under the License.
 */
 
-
 #include "commonincludes.hpp"
 #include "stuncore.h"
 #include "stunsocket.h"
@@ -22,26 +21,23 @@
 #include "server.h"
 #include "ratelimiter.h"
 
-
-
-CStunServerConfig::CStunServerConfig() :
-fHasPP(false),
-fHasPA(false),
-fHasAP(false),
-fHasAA(false),
-fMultiThreadedMode(false),
-fTCP(false),
-nMaxConnections(0), // zero means default
-fEnableDosProtection(false),
-fReuseAddr(false)
+CStunServerConfig::CStunServerConfig()
+: fHasPP(false)
+, fHasPA(false)
+, fHasAP(false)
+, fHasAA(false)
+, fMultiThreadedMode(false)
+, fTCP(false)
+, nMaxConnections(0)
+, // zero means default
+fEnableDosProtection(false)
+, fReuseAddr(false)
 {
     ;
 }
 
-
-
-CStunServer::CStunServer() :
-_arrSockets() // zero-init
+CStunServer::CStunServer()
+: _arrSockets() // zero-init
 {
     ;
 }
@@ -54,12 +50,11 @@ CStunServer::~CStunServer()
 HRESULT CStunServer::AddSocket(TransportAddressSet* pTSA, SocketRole role, const CSocketAddress& addrListen, const CSocketAddress& addrAdvertise, bool fSetReuseFlag)
 {
     HRESULT hr = S_OK;
-    
+
     ASSERT(IsValidSocketRole(role));
-    
+
     Chk(_arrSockets[role].UDPInit(addrListen, role, fSetReuseFlag));
     ChkA(_arrSockets[role].EnablePktInfoOption(true));
-
 
 #ifdef DEBUG
     {
@@ -71,13 +66,13 @@ HRESULT CStunServer::AddSocket(TransportAddressSet* pTSA, SocketRole role, const
         // I can't think of any case where addrListen != addrLocal
         // the ports will be different if addrListen.GetPort() is 0, but that
         // should never happen.
-        
+
         // but if the assert below fails, I want to know about it
         ASSERT(addrLocal.IsSameIP_and_Port(addrListen));
     }
 #endif
 
-    pTSA->set[role].fValid = true;    
+    pTSA->set[role].fValid = true;
     if (addrAdvertise.IsIPAddressZero() == false)
     {
         // set the TSA for this socket to what the configuration wants us to advertise this address for in ORIGIN and OTHER address attributes
@@ -88,7 +83,7 @@ HRESULT CStunServer::AddSocket(TransportAddressSet* pTSA, SocketRole role, const
     {
         pTSA->set[role].addr = addrListen; // use the socket's IP and port (OK if this is INADDR_ANY)
     }
-    
+
 Cleanup:
     return hr;
 }
@@ -99,15 +94,15 @@ HRESULT CStunServer::Initialize(const CStunServerConfig& config)
     int socketcount = 0;
     CRefCountedPtr<IStunAuth> _spAuth;
     TransportAddressSet tsa = {};
-    boost::shared_ptr<RateLimiter> spLimiter;
+    std::shared_ptr<RateLimiter> spLimiter;
 
     // cleanup any thing that's going on now
     Shutdown();
-    
+
     // optional code: create an authentication provider and initialize it here (if you want authentication)
     // set the _spAuth member to reference it
     // Chk(CYourAuthProvider::CreateInstanceNoInit(&_spAuth));
-    
+
     // Create the sockets and initialize the TSA thing
     if (config.fHasPP)
     {
@@ -139,19 +134,19 @@ HRESULT CStunServer::Initialize(const CStunServerConfig& config)
     {
         Logging::LogMsg(LL_DEBUG, "Creating rate limiter for ddos protection\n");
         // hard coding to 25000 ip addresses
-        spLimiter = boost::shared_ptr<RateLimiter>(new RateLimiter(25000, config.fMultiThreadedMode));
+        spLimiter = std::shared_ptr<RateLimiter>(new RateLimiter(25000, config.fMultiThreadedMode));
     }
 
     if (config.fMultiThreadedMode == false)
     {
         Logging::LogMsg(LL_DEBUG, "Configuring single threaded mode\n");
-        
+
         // create one thread for all the sockets
         CStunSocketThread* pThread = new CStunSocketThread();
-        ChkIf(pThread==NULL, E_OUTOFMEMORY);
+        ChkIf(pThread == NULL, E_OUTOFMEMORY);
 
         _threads.push_back(pThread);
-        
+
         Chk(pThread->Init(_arrSockets, &tsa, _spAuth, (SocketRole)-1, spLimiter));
     }
     else
@@ -167,13 +162,12 @@ HRESULT CStunServer::Initialize(const CStunServerConfig& config)
                 SocketRole rolePrimaryRecv = _arrSockets[index].GetRole();
                 ASSERT(rolePrimaryRecv == (SocketRole)index);
                 pThread = new CStunSocketThread();
-                ChkIf(pThread==NULL, E_OUTOFMEMORY);
+                ChkIf(pThread == NULL, E_OUTOFMEMORY);
                 _threads.push_back(pThread);
                 Chk(pThread->Init(_arrSockets, &tsa, _spAuth, rolePrimaryRecv, spLimiter));
             }
         }
     }
-
 
 Cleanup:
 
@@ -183,7 +177,6 @@ Cleanup:
     }
 
     return hr;
-
 }
 
 HRESULT CStunServer::Shutdown()
@@ -207,13 +200,11 @@ HRESULT CStunServer::Shutdown()
         _threads[index] = NULL;
     }
     _threads.clear();
-    
+
     _spAuth.ReleaseAndClear();
-    
+
     return S_OK;
 }
-
-
 
 HRESULT CStunServer::Start()
 {
@@ -244,7 +235,6 @@ Cleanup:
 HRESULT CStunServer::Stop()
 {
 
-
     size_t len = _threads.size();
 
     for (size_t index = 0; index < len; index++)
@@ -256,7 +246,6 @@ HRESULT CStunServer::Stop()
             pThread->SignalForStop(false);
         }
     }
-
 
     for (size_t index = 0; index < len; index++)
     {
@@ -274,16 +263,11 @@ HRESULT CStunServer::Stop()
     {
         CStunSocketThread* pThread = _threads[index];
 
-        if  (pThread != NULL)
+        if (pThread != NULL)
         {
             pThread->WaitForStopAndClose();
         }
     }
 
-
     return S_OK;
 }
-
-
-
-

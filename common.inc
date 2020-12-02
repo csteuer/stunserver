@@ -1,7 +1,7 @@
 #BOOST_INCLUDE := -I/home/jselbie/boost_1_72_0
 #OPENSSL_INCLUDE := -I/Users/jselbie/openssl/include
 
-DEFINES := -DNDEBUG
+DEFINES := -DNDEBUG -DWITH_CONFIGFILE_SUPPORT
 
 # CLANG compiler works fine
 # CXX := /usr/bin/clang++

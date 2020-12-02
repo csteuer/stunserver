@@ -6,7 +6,7 @@ include ../common.inc
 	sh makecodefile.sh $^ $@ $(*)_text
 
 %.txt: %.md
-	cat $^ | sed s/\*\*//g | pandoc --no-wrap -s -w plain -o $@ 
+	cat $^ | sed s/\*\*//g | pandoc --wrap=none -s -w plain -o $@ 
 
 %.1: %.md
 	pandoc -s -w man -o $@ $^

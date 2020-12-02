@@ -28,6 +28,7 @@ namespace Logging
     {
         ::vprintf(pszFormat, args);
         ::printf("\n");
+        ::fflush(::stdout);
     }
 
     uint32_t GetLogLevel()

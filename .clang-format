@@ -1,0 +1,16 @@
+BasedOnStyle: Mozilla
+IndentWidth: 4
+AccessModifierOffset: -4
+SortIncludes: false
+AlwaysBreakAfterDefinitionReturnType: None
+AlwaysBreakAfterReturnType: None
+BreakBeforeBraces: Custom
+ConstructorInitializerIndentWidth: 0
+ColumnLimit: 0
+BraceWrapping:
+    AfterClass: true
+    AfterFunction: true
+    AfterControlStatement: Always
+    BeforeElse: true
+    AfterEnum: true
+    AfterStruct: true

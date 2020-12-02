@@ -1,0 +1,30 @@
+add_executable(stuntestcode
+    testatomichelpers.cpp
+    testatomichelpers.h
+    testbuilder.cpp
+    testbuilder.h
+    testclientlogic.cpp
+    testclientlogic.h
+    testcmdline.cpp
+    testcmdline.h
+    testcode.cpp
+    testdatastream.cpp
+    testdatastream.h
+    testfasthash.cpp
+    testfasthash.h
+    testintegrity.cpp
+    testintegrity.h
+    testmessagehandler.cpp
+    testmessagehandler.h
+    testpolling.cpp
+    testpolling.h
+    testratelimiter.cpp
+    testratelimiter.h
+    testreader.cpp
+    testreader.h
+    testrecvfromex.cpp
+    testrecvfromex.h
+    unittest.h
+)
+
+target_link_libraries(stuntestcode common stuncore networkutils)
