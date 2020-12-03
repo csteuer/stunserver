@@ -14,13 +14,12 @@ add_executable(stunserver
 
 target_link_libraries(stunserver common stuncore networkutils resources Threads::Threads)
 
-option(with_configfile_support "The server can be configured with a json file (requires boost)" OFF)
 if (with_configfile_support)
-    find_package(Boost REQUIRED)
     target_link_libraries(stunserver Boost::headers)
     target_compile_definitions(stunserver PUBLIC WITH_CONFIGFILE_SUPPORT)
 endif()
 
-install(TARGETS stunserver
+install(TARGETS stunserver EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION lib
+    INCLUDES DESTINATION include)

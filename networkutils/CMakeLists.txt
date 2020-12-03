@@ -1,22 +1,31 @@
-add_library(networkutils
-    adapters.cpp
+set(networkutils_headers
     adapters.h
-    polling.cpp
     polling.h
-    ratelimiter.cpp
     ratelimiter.h
-    recvfromex.cpp
     recvfromex.h
-    resolvehostname.cpp
     resolvehostname.h
-    stunsocket.cpp
     stunsocket.h
 )
 
-target_include_directories(networkutils PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(networkutils
+    ${networkutils_headers}
+    adapters.cpp
+    polling.cpp
+    ratelimiter.cpp
+    recvfromex.cpp
+    resolvehostname.cpp
+    stunsocket.cpp
+)
+
+target_include_directories(networkutils PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include/>)
 
 target_link_libraries(networkutils PUBLIC common stuncore)
 
-install(TARGETS networkutils
+install(FILES ${networkutils_headers} DESTINATION include/)
+
+install(TARGETS networkutils EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION lib
+    INCLUDES DESTINATION include)

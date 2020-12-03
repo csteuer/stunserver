@@ -1,32 +1,41 @@
-add_library(common
-    atomichelpers.cpp
+set(common_headers
     atomichelpers.h
     chkmacros.h
-    cmdlineparser.cpp
     cmdlineparser.h
-    common.cpp
-    commonincludes.hpp
-    fasthash.cpp
     fasthash.h
-    getconsolewidth.cpp
-    getmillisecondcounter.cpp
     hresult.h
-    logger.cpp
     logger.h
     objectfactory.h
     oshelper.h
-    prettyprint.cpp
     prettyprint.h
-    refcountobject.cpp
     refcountobject.h
-    stringhelper.cpp
     stringhelper.h
+    commonincludes.hpp
 )
 
-target_include_directories(common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(common
+    ${common_headers}
+    atomichelpers.cpp
+    cmdlineparser.cpp
+    common.cpp
+    fasthash.cpp
+    getconsolewidth.cpp
+    getmillisecondcounter.cpp
+    logger.cpp
+    prettyprint.cpp
+    refcountobject.cpp
+    stringhelper.cpp
+)
+
+target_include_directories(common PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include/>)
 
 target_compile_definitions(common PUBLIC $<$<CONFIG:Debug>:DEBUG_MODE>)
 
-install(TARGETS common
+install(FILES ${common_headers} DESTINATION include/)
+
+install(TARGETS common EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION lib
+    INCLUDES DESTINATION include)

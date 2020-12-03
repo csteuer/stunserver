@@ -1,34 +1,43 @@
-add_library(stuncore 
-    buffer.cpp
+set(stuncore_headers
     buffer.h
-    datastream.cpp
     datastream.h
-    messagehandler.cpp
     messagehandler.h
-    socketaddress.cpp
     socketaddress.h
     socketrole.h
     stunauth.h
-    stunbuilder.cpp
     stunbuilder.h
-    stunclientlogic.cpp
     stunclientlogic.h
-    stunclienttests.cpp
     stunclienttests.h
     stuncore.h
-    stunreader.cpp
     stunreader.h
     stuntypes.h
-    stunutils.cpp
     stunutils.h
-    crc32.cpp
     crc32.h
 )
 
-target_include_directories(stuncore PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(stuncore
+    ${stuncore_headers}
+    buffer.cpp
+    datastream.cpp
+    messagehandler.cpp
+    socketaddress.cpp
+    stunbuilder.cpp
+    stunclientlogic.cpp
+    stunclienttests.cpp
+    stunreader.cpp
+    stunutils.cpp
+    crc32.cpp
+)
+
+target_include_directories(stuncore PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<INSTALL_INTERFACE:include/>)
 
 target_link_libraries(stuncore common OpenSSL::Crypto)
 
-install(TARGETS stuncore
+install(FILES ${stuncore_headers} DESTINATION include/)
+
+install(TARGETS stuncore EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION lib
+    INCLUDES DESTINATION include)
