@@ -14,20 +14,21 @@
    limitations under the License.
 */
 
-
 #ifndef MESSAGEHANDLER_H_
 #define MESSAGEHANDLER_H_
 
 #include "stunauth.h"
 #include "socketrole.h"
+#include "socketaddress.h"
+#include "stunreader.h"
 
 struct StunMessageIn
 {
-    SocketRole socketrole;         /// which socket id did the message arrive on
+    SocketRole socketrole;       /// which socket id did the message arrive on
     CSocketAddress addrLocal;    /// What local IP address the message was received on (useful if the socket binded to INADDR_ANY)
     CSocketAddress addrRemote;   /// the address of the node that sent us the message
-    CStunMessageReader* pReader;   /// reader containing a valid stun message
-    bool fConnectionOriented;     // true for TCP or TLS (where we can't send back to a different port)
+    CStunMessageReader* pReader; /// reader containing a valid stun message
+    bool fConnectionOriented;    // true for TCP or TLS (where we can't send back to a different port)
 };
 
 struct StunMessageOut
@@ -37,15 +38,14 @@ struct StunMessageOut
     CRefCountedBuffer spBufferOut; // allocated by the caller - output message
 };
 
-
 struct StunMessageIntegrity
 {
     bool fSendWithIntegrity;
-    
+
     bool fUseLongTerm;
-    char szUser[MAX_STUN_AUTH_STRING_SIZE+1]; // used for computing the message-integrity value
-    char szRealm[MAX_STUN_AUTH_STRING_SIZE+1]; // used for computing the message-integrity value
-    char szPassword[MAX_STUN_AUTH_STRING_SIZE+1]; // used for computing the message-integrity value
+    char szUser[MAX_STUN_AUTH_STRING_SIZE + 1];     // used for computing the message-integrity value
+    char szRealm[MAX_STUN_AUTH_STRING_SIZE + 1];    // used for computing the message-integrity value
+    char szPassword[MAX_STUN_AUTH_STRING_SIZE + 1]; // used for computing the message-integrity value
 };
 
 struct TransportAddress
@@ -65,43 +65,39 @@ struct StunErrorCode
     StunMessageClass msgclass;
     uint16_t msgtype;
     uint16_t attribUnknown; // for now, just send back one unknown attribute at a time
-    char szNonce[MAX_STUN_AUTH_STRING_SIZE+1];
-    char szRealm[MAX_STUN_AUTH_STRING_SIZE+1];
+    char szNonce[MAX_STUN_AUTH_STRING_SIZE + 1];
+    char szRealm[MAX_STUN_AUTH_STRING_SIZE + 1];
 };
-
-
-
 
 class CStunRequestHandler
 {
 public:
     static HRESULT ProcessRequest(const StunMessageIn& msgIn, StunMessageOut& msgOut, TransportAddressSet* pAddressSet, /*optional*/ IStunAuth* pAuth);
+
 private:
-    
     CStunRequestHandler();
 
     HRESULT ProcessBindingRequest();
     void BuildErrorResponse();
     HRESULT ValidateAuth();
     HRESULT ProcessRequestImpl();
-    
+
     // input
     IStunAuth* _pAuth;
     TransportAddressSet* _pAddrSet;
     const StunMessageIn* _pMsgIn;
     StunMessageOut* _pMsgOut;
-    
+
     // member variables to remember along the way
     StunMessageIntegrity _integrity;
     StunErrorCode _error;
-    
+
     bool _fRequestHasResponsePort;
     StunTransactionId _transid;
     bool _fLegacyMode;
-    
+
     bool HasAddress(SocketRole role);
     bool IsIPAddressZeroOrInvalid(SocketRole role);
 };
-
 
 #endif /* MESSAGEHANDLER_H_ */

@@ -14,27 +14,27 @@
    limitations under the License.
 */
 
-
-
 #ifndef STUN_SOCK_ADDR_H
 #define STUN_SOCK_ADDR_H
 
-#include "stuntypes.h"
+#include <netinet/in.h>
 
-union simple_sockaddr
-{
+#include <string>
+
+#include "stuntypes.h"
+#include "hresult.h"
+
+union simple_sockaddr {
     sockaddr addr;
     sockaddr_in addr4;
     sockaddr_in6 addr6;
 };
-
 
 class CSocketAddress
 {
     simple_sockaddr _address;
 
     size_t GetIPImpl(void* pAddr, size_t length, bool fNetworkByteOrder) const; // returns the number of bytes copied, or Zero on error
-
 
 public:
     CSocketAddress();
@@ -45,10 +45,9 @@ public:
 
     CSocketAddress(const sockaddr_in& addr);
     CSocketAddress(const sockaddr_in6& addr6);
-    
-    // both IP and PORT are passed in HOST BYTE ORDER 
-    CSocketAddress(uint32_t ipHostByteOrder, uint16_t port);
 
+    // both IP and PORT are passed in HOST BYTE ORDER
+    CSocketAddress(uint32_t ipHostByteOrder, uint16_t port);
 
     uint16_t GetPort() const;
     uint16_t GetPort_NBO() const; // network byte order
@@ -57,7 +56,7 @@ public:
     uint16_t GetIPLength() const; // either returns 4 or 16 for IPV4 and IPV6 respectively
 
     // not sure if IPv6 has a logical "network byte order" that's different from it's normal nomenclature
-    size_t GetIP(void* pAddr, size_t length) const; // returns the number of bytes copied, or Zero on error
+    size_t GetIP(void* pAddr, size_t length) const;     // returns the number of bytes copied, or Zero on error
     size_t GetIP_NBO(void* pAddr, size_t length) const; // returns the number of bytes copied, or Zero on error
 
     uint16_t GetFamily() const;
@@ -69,18 +68,13 @@ public:
 
     bool IsIPAddressZero() const;
 
-
     bool IsSameIP(const CSocketAddress& other) const;
     bool IsSameIP_and_Port(const CSocketAddress& other) const;
 
     void ToString(std::string* pStr) const;
     HRESULT ToStringBuffer(char* pszAddrBytes, size_t length) const;
-    
+
     static HRESULT GetLocalHost(uint16_t family, CSocketAddress* pAddr);
-
-
 };
-
-
 
 #endif
