@@ -200,4 +200,4 @@ threading code has already been written, just needs some finish work.
 John Selbie
 john@selbie.com
 
-> Please not that this is not the original version created by John Selbie.
+> Please note that this is not the original version created by John Selbie.
