@@ -27,4 +27,4 @@ add_executable(stuntestcode
     unittest.h
 )
 
-target_link_libraries(stuntestcode common stuncore networkutils)
+target_link_libraries(stuntestcode stuntmancommon stuntmancore stuntmannetworkutils)

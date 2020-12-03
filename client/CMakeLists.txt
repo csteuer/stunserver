@@ -1,6 +1,6 @@
 add_executable(stunclient clientmain.cpp)
 
-target_link_libraries(stunclient common stuncore networkutils resources)
+target_link_libraries(stunclient stuntmancommon stuntmancore stuntmannetworkutils resources)
 
 install(TARGETS stunclient EXPORT StuntmanTargets
     RUNTIME DESTINATION bin

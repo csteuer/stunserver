@@ -13,7 +13,7 @@ set(common_headers
     commonincludes.hpp
 )
 
-add_library(common
+add_library(stuntmancommon
     ${common_headers}
     atomichelpers.cpp
     cmdlineparser.cpp
@@ -27,15 +27,18 @@ add_library(common
     stringhelper.cpp
 )
 
-target_include_directories(common PUBLIC
+set_target_properties(stuntmancommon PROPERTIES
+    OUTPUT_NAME common)
+
+target_include_directories(stuntmancommon PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include/>)
 
-target_compile_definitions(common PUBLIC $<$<CONFIG:Debug>:DEBUG_MODE>)
+target_compile_definitions(stuntmancommon PUBLIC $<$<CONFIG:Debug>:DEBUG_MODE>)
 
 install(FILES ${common_headers} DESTINATION include/)
 
-install(TARGETS common EXPORT StuntmanTargets
+install(TARGETS stuntmancommon EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     INCLUDES DESTINATION include)

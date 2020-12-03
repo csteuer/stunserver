@@ -7,7 +7,7 @@ set(networkutils_headers
     stunsocket.h
 )
 
-add_library(networkutils
+add_library(stuntmannetworkutils
     ${networkutils_headers}
     adapters.cpp
     polling.cpp
@@ -17,15 +17,18 @@ add_library(networkutils
     stunsocket.cpp
 )
 
-target_include_directories(networkutils PUBLIC
+set_target_properties(stuntmannetworkutils PROPERTIES
+    OUTPUT_NAME networkutils)
+
+target_include_directories(stuntmannetworkutils PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include/>)
 
-target_link_libraries(networkutils PUBLIC common stuncore)
+target_link_libraries(stuntmannetworkutils PUBLIC stuntmancommon stuntmancore)
 
 install(FILES ${networkutils_headers} DESTINATION include/)
 
-install(TARGETS networkutils EXPORT StuntmanTargets
+install(TARGETS stuntmannetworkutils EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
     INCLUDES DESTINATION include)

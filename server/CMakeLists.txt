@@ -12,7 +12,7 @@ add_executable(stunserver
     tcpserver.h
 )
 
-target_link_libraries(stunserver common stuncore networkutils resources Threads::Threads)
+target_link_libraries(stunserver stuntmancommon stuntmancore stuntmannetworkutils resources Threads::Threads)
 
 if (with_configfile_support)
     target_link_libraries(stunserver Boost::headers)
