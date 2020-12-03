@@ -19,6 +19,8 @@
 
 #include "chkmacros.h"
 
+#include <cstddef>
+
 template<typename T>
 class CObjectFactory
 {
