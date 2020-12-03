@@ -14,13 +14,9 @@
    limitations under the License.
 */
 
-
-#include "commonincludes.hpp"
 #include "refcountobject.h"
 
-
 #include "atomichelpers.h"
-
 
 CBasicRefCount::CBasicRefCount()
 {
@@ -51,6 +47,3 @@ void CBasicRefCount::OnFinalRelease()
 {
     delete this;
 }
-
-
-

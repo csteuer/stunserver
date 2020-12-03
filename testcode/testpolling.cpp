@@ -14,12 +14,13 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-#include "unittest.h"
-
-#include "polling.h"
-
 #include "testpolling.h"
+
+#include "chkmacros.h"
+
+#include <unistd.h>
+#include <fcntl.h>
+#include <random>
 
 CTestPolling::CTestPolling()
 {
@@ -34,13 +35,13 @@ CTestPolling::~CTestPolling()
 HRESULT CTestPolling::Run()
 {
     HRESULT hr = S_OK;
-    
+
 #ifdef HAS_EPOLL
     _polltype = IPOLLING_TYPE_EPOLL;
     ChkA(Test1());
     ChkA(Test2());
 #endif
-    
+
     _polltype = IPOLLING_TYPE_POLL;
     ChkA(Test1());
     ChkA(Test2());
@@ -53,15 +54,14 @@ void CTestPolling::TestUnInit()
 {
     size_t size = _pipes.size();
     _spPolling.ReleaseAndClear();
-    
+
     for (size_t index = 0; index < size; index++)
     {
         close(_pipes[index].readpipe);
         close(_pipes[index].writepipe);
     }
-    
+
     _pipes.clear();
-    
 }
 
 HRESULT CTestPolling::SetNonBlocking(int fd)
@@ -69,20 +69,19 @@ HRESULT CTestPolling::SetNonBlocking(int fd)
     HRESULT hr = S_OK;
     int result;
     int flags;
-    
+
     flags = ::fcntl(fd, F_GETFL, 0);
-    
+
     ChkIfA(flags == -1, ERRNOHR);
-    
+
     flags |= O_NONBLOCK;
-    
-    result = fcntl(fd , F_SETFL , flags);
-    
+
+    result = fcntl(fd, F_SETFL, flags);
+
     ChkIfA(result == -1, ERRNOHR);
-    
+
 Cleanup:
-    return hr;  
-    
+    return hr;
 }
 
 HRESULT CTestPolling::CreateAndAddPipe()
@@ -92,7 +91,7 @@ HRESULT CTestPolling::CreateAndAddPipe()
     int ret = -1;
     int fds[2];
     ret = ::pipe(fds);
-    
+
     ChkIfA(ret == -1, ERRNOHR);
 
     pp.readpipe = fds[0];
@@ -104,8 +103,8 @@ HRESULT CTestPolling::CreateAndAddPipe()
 
     _pipes.push_back(pp);
 
-    ChkA(_spPolling->Add(fds[0], IPOLLING_READ)); 
-    
+    ChkA(_spPolling->Add(fds[0], IPOLLING_READ));
+
 Cleanup:
     return hr;
 }
@@ -113,16 +112,16 @@ Cleanup:
 HRESULT CTestPolling::TestInit(size_t sizePolling, size_t sizePipeArray)
 {
     HRESULT hr = S_OK;
-    
+
     TestUnInit();
-    
+
     ChkA(CreatePollingInstance(_polltype, sizePolling, _spPolling.GetPointerPointer()));
-    
+
     for (size_t index = 0; index < sizePipeArray; index++)
     {
         ChkA(CreateAndAddPipe());
     }
-    
+
 Cleanup:
     return hr;
 }
@@ -132,12 +131,12 @@ HRESULT CTestPolling::WritePipe(PipePair* pPair)
     HRESULT hr = S_OK;
     char ch = 'x';
     int ret = -1;
-    
+
     ret = write(pPair->writepipe, &ch, 1);
     ChkIfA(ret < 0, ERRNOHR);
     ChkIfA(ret == 0, E_UNEXPECTED);
     pPair->fDataPending = true;
-    
+
 Cleanup:
     return hr;
 }
@@ -152,14 +151,14 @@ HRESULT CTestPolling::ConsumeEvent(int* pFD, int* pCount)
     int count = 0;
     int fd = -1;
     int pipesindex = -1;
-    
+
     hrResult = _spPolling->WaitForNextEvent(&event, 0);
     ChkA(hrResult);
-    
+
     ChkIfA(hrResult == S_FALSE, S_FALSE);
-    
+
     fd = event.fd;
-    
+
     while (true)
     {
         result = ::read(fd, &ch, 1);
@@ -169,17 +168,17 @@ HRESULT CTestPolling::ConsumeEvent(int* pFD, int* pCount)
         }
         count++;
     }
-    
+
     pipesindex = FindPipePairIndex(fd);
     ChkIfA(pipesindex == -1, E_UNEXPECTED);
-    
+
     ChkIfA(count == 0, E_UNEXPECTED);
-    
+
     ChkIfA(_pipes[pipesindex].fDataPending == false, E_UNEXPECTED);
     _pipes[pipesindex].fDataPending = false;
-    
+
 Cleanup:
-    if (pFD)    
+    if (pFD)
     {
         *pFD = fd;
     }
@@ -193,7 +192,7 @@ Cleanup:
 int CTestPolling::FindPipePairIndex(int fd)
 {
     size_t size = _pipes.size();
-    
+
     for (size_t index = 0; index < size; index++)
     {
         if ((_pipes[index].readpipe == fd) || (_pipes[index].writepipe == fd))
@@ -201,7 +200,7 @@ int CTestPolling::FindPipePairIndex(int fd)
             return index;
         }
     }
-    
+
     return -1;
 }
 
@@ -209,7 +208,7 @@ size_t CTestPolling::GetPendingCount()
 {
     size_t size = _pipes.size();
     size_t count = 0;
-    
+
     for (size_t index = 0; index < size; index++)
     {
         if (_pipes[index].fDataPending)
@@ -217,34 +216,32 @@ size_t CTestPolling::GetPendingCount()
             count++;
         }
     }
-    
+
     return count;
 }
 
 HRESULT CTestPolling::RemovePipe(int pipeindex)
 {
     HRESULT hr = S_OK;
-    
+
     size_t size = _pipes.size();
-    
+
     ChkIfA(pipeindex < 0, E_FAIL);
     ChkIfA(pipeindex >= (int)size, E_FAIL);
-    
+
     ChkA(_spPolling->Remove(_pipes[pipeindex].readpipe));
-    
+
     close(_pipes[pipeindex].readpipe);
     _pipes[pipeindex].readpipe = -1;
-    
+
     close(_pipes[pipeindex].writepipe);
     _pipes[pipeindex].writepipe = -1;
-    
-    _pipes.erase(_pipes.begin()+pipeindex);
-    
+
+    _pipes.erase(_pipes.begin() + pipeindex);
+
 Cleanup:
     return hr;
 }
-
-
 
 // simplest of all tests. Just set a file descriptor and see that it's available
 // repeat many times
@@ -253,41 +250,39 @@ HRESULT CTestPolling::Test1()
     HRESULT hr = S_OK;
     HRESULT hrResult;
     size_t size;
-    PollEvent event;    
+    PollEvent event;
     int fd;
     int count = 0;
-    
+
     srand(100);
 
     ChkA(TestInit(10, 10));
-    
+
     size = _pipes.size();
-    
+
     hrResult = _spPolling->WaitForNextEvent(&event, 0);
-    ChkIfA(hrResult != S_FALSE, E_UNEXPECTED);    
-    
+    ChkIfA(hrResult != S_FALSE, E_UNEXPECTED);
+
     // one event at a time model
     for (int index = 0; index < 100; index++)
     {
 
         size_t item = rand() % size;
-        
+
         ChkA(WritePipe(&_pipes[item]));
-        
+
         ConsumeEvent(&fd, &count);
-        
+
         ChkIfA(fd != _pipes[item].readpipe, E_UNEXPECTED);
         ChkIfA(count != 1, E_UNEXPECTED);
     }
-    
+
     hrResult = _spPolling->WaitForNextEvent(&event, 0);
     ChkIfA(hrResult != S_FALSE, E_UNEXPECTED);
-    
+
 Cleanup:
     return hr;
 }
-
-
 
 // create a polling set
 HRESULT CTestPolling::Test2()
@@ -300,66 +295,61 @@ HRESULT CTestPolling::Test2()
 
     HRESULT hr = S_OK;
     HRESULT hrResult;
-    PollEvent event;  
+    PollEvent event;
     const size_t c_maxSockets = 10;
-    
+
     srand(100);
 
     ChkA(TestInit(c_maxSockets, 0));
-    
-   
+
     hrResult = _spPolling->WaitForNextEvent(&event, 0);
-    ChkIfA(hrResult != S_FALSE, E_UNEXPECTED);    
-    
-    
+    ChkIfA(hrResult != S_FALSE, E_UNEXPECTED);
+
     for (size_t index = 0; index < 1000; index++)
     {
         int randresult = ::rand() % 4;
-        
+
         switch (randresult)
         {
-            case 0:
-            {
+            case 0: {
                 // simulate a new socket being added
                 if (_pipes.size() >= c_maxSockets)
                 {
                     continue;
                 }
-                
+
                 ChkA(CreateAndAddPipe());
 
                 break;
             }
-            
-            case 1:
-            {
+
+            case 1: {
                 // simulate incoming data
                 size_t size = _pipes.size();
                 size_t itemindex;
-                
+
                 if (size == 0)
                 {
                     continue;
                 }
-                
+
                 itemindex = rand() % size;
                 ChkA(WritePipe(&_pipes[itemindex]));
-                
+
                 break;
             }
-            
+
             case 2:
-            case 3:
-            {
+            case 3: {
                 int fd;
                 size_t pending = GetPendingCount();
                 if (pending == 0)
                 {
                     continue;
                 }
-                
+
                 ChkA(ConsumeEvent(&fd, NULL));
-                
+
                 if (randresult == 3)
                 {
                     // simulate removing this pipe from the set
@@ -367,8 +357,8 @@ HRESULT CTestPolling::Test2()
                 }
                 break;
             } // case
-        } // switch
-    } // for
+        }     // switch
+    }         // for
 
 Cleanup:
     return hr;
@@ -379,9 +369,9 @@ HRESULT CTestPolling::Test3()
     HRESULT hr = S_OK;
 
     const size_t c_maxSockets = 10;
-    
+
     ChkA(TestInit(c_maxSockets, 0));
-    
+
     ChkA(_spPolling->Add(3, IPOLLING_READ));
     ChkA(_spPolling->Remove(3));
     ChkA(_spPolling->Add(5, IPOLLING_READ));
@@ -400,10 +390,7 @@ HRESULT CTestPolling::Test3()
     ChkA(_spPolling->Add(25, IPOLLING_READ));
     ChkA(_spPolling->Add(27, IPOLLING_READ));
     ChkA(_spPolling->Remove(13));
-    
+
 Cleanup:
     return hr;
-    
 }
-
-

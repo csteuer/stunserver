@@ -14,9 +14,6 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-#include "stuncore.h"
-
 #include "testdatastream.h"
 #include "testreader.h"
 #include "testbuilder.h"

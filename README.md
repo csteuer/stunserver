@@ -7,10 +7,11 @@ April 7, 2020
 This is a fork of [stunserver](https://github.com/jselbie/stunserver) from
 John Selbie with the following changes:
 
-* CMake support
-* Boost is optional (when building with CMake)
-  * The CRC 32 implementation of boost has been replaced with a modified version of [Simple CRC32](http://home.thep.lu.se/~bjorn/crc/) by Björn Samuelsson
-  * Smart pointers have been replaced with C++11 smart pointers
+* Added CMake support.
+* Boost is optional (when building with CMake).
+  * The CRC 32 implementation of boost has been replaced with a modified version of [Simple CRC32](http://home.thep.lu.se/~bjorn/crc/) by Björn Samuelsson.
+  * Boost smart pointers have been replaced with C++11 smart pointers.
+* The way that headers are included has been changed so that its easier to reuse the library components of stuntman.
 * clang-format has been used to format the changed source files. 
   Although I have tried to create a formatting configuration close to the original style
   there are some white space changes.
@@ -34,8 +35,20 @@ can not be configured with a JSON file (command line options are still possible)
 
 ### Why this fork
 
-The changes make it easier to use STUNTMAN as a dependency in other projects (e.g. as an [external project](https://cmake.org/cmake/help/latest/module/ExternalProject.html?highlight=externalproject) 
- with CMake).
+The changes make it easier to use STUNTMAN as a library in other projects.
+E.g. with CMake >= 3.11:
+```
+include(FetchContent)
+
+FetchContent_Declare(
+  stuntman
+  GIT_REPOSITORY git@github.com:csteuer/stunserver.git
+  GIT_TAG        origin/master
+)
+
+FetchContent_MakeAvailable(stuntman)
+
+```
 
 ## Features:
 

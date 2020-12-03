@@ -14,12 +14,11 @@
    limitations under the License.
 */
 
-
-#include "commonincludes.hpp"
-#include "cmdlineparser.h"
-#include "unittest.h"
 #include "testcmdline.h"
 
+#include "internal_definitions.hpp"
+#include "chkmacros.h"
+#include "cmdlineparser.h"
 
 // This test validates that the CCmdLineParser works correctly
 HRESULT CTestCmdLineParser::Run()
@@ -34,7 +33,6 @@ HRESULT CTestCmdLineParser::Run()
     argv[3] = "--walrus=456";
     argv[4] = "--vulture";
 
-
     int argc = ARRAYSIZE(argv);
     bool fErrorFlag = false;
 
@@ -44,14 +42,13 @@ HRESULT CTestCmdLineParser::Run()
     std::string strVulture;
     std::string strAardvark;
 
-
     CCmdLineParser parser;
 
     parser.AddOption("aardvark", 1, &strAardvark);
-    parser.AddOption("vulture", 0,  &strVulture);
-    parser.AddOption("walrus", 1,   &strWalrus);
-    parser.AddOption("yak", 2,      &strYak);
-    parser.AddOption("zebra", 2,    &strZebra);
+    parser.AddOption("vulture", 0, &strVulture);
+    parser.AddOption("walrus", 1, &strWalrus);
+    parser.AddOption("yak", 2, &strYak);
+    parser.AddOption("zebra", 2, &strZebra);
 
     parser.ParseCommandLine(argc, (char**)argv, 1, &fErrorFlag);
 

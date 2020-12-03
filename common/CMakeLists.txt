@@ -10,7 +10,6 @@ set(common_headers
     prettyprint.h
     refcountobject.h
     stringhelper.h
-    commonincludes.hpp
 )
 
 add_library(stuntmancommon
@@ -25,6 +24,7 @@ add_library(stuntmancommon
     prettyprint.cpp
     refcountobject.cpp
     stringhelper.cpp
+    internal_definitions.hpp
 )
 
 set_target_properties(stuntmancommon PROPERTIES
@@ -33,8 +33,6 @@ set_target_properties(stuntmancommon PROPERTIES
 target_include_directories(stuntmancommon PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include/>)
-
-target_compile_definitions(stuntmancommon PUBLIC $<$<CONFIG:Debug>:DEBUG_MODE>)
 
 install(FILES ${common_headers} DESTINATION include/)
 

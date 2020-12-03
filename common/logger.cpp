@@ -14,44 +14,41 @@
    limitations under the License.
 */
 
-
-#include "commonincludes.hpp"
-
 #include "logger.h"
 
+#include <cstdio>
+#include <cstdarg>
 
-namespace Logging
+namespace Logging {
+static uint32_t s_loglevel = LL_ALWAYS; // error and usage messages only
+
+void VPrintMsg(const char* pszFormat, va_list& args)
 {
-    static uint32_t s_loglevel = LL_ALWAYS; // error and usage messages only
+    ::vprintf(pszFormat, args);
+    ::printf("\n");
+    ::fflush(::stdout);
+}
 
-    void VPrintMsg(const char* pszFormat, va_list& args)
+uint32_t GetLogLevel()
+{
+    return s_loglevel;
+}
+
+void SetLogLevel(uint32_t level)
+{
+    s_loglevel = level;
+}
+
+void LogMsg(uint32_t level, const char* pszFormat, ...)
+{
+    va_list args;
+    va_start(args, pszFormat);
+
+    if (level <= s_loglevel)
     {
-        ::vprintf(pszFormat, args);
-        ::printf("\n");
-        ::fflush(::stdout);
+        VPrintMsg(pszFormat, args);
     }
 
-    uint32_t GetLogLevel()
-    {
-        return s_loglevel;
-    }
-
-    void SetLogLevel(uint32_t level)
-    {
-        s_loglevel = level;
-    }
-
-
-    void LogMsg(uint32_t level, const char* pszFormat, ...)
-    {
-        va_list args;
-        va_start(args, pszFormat);
-
-        if (level <= s_loglevel)
-        {
-            VPrintMsg(pszFormat, args);
-        }
-
-        va_end(args);
-    }
+    va_end(args);
+}
 }

@@ -17,8 +17,12 @@
 #ifndef SAMPLE_STUN_AUTH_PROVIDER
 #define SAMPLE_STUN_AUTH_PROVIDER
 
+#include "hresult.h"
+#include "refcountobject.h"
+#include "objectfactory.h"
+#include "stunauth.h"
 
-#if 0
+/*
 
 sampleauthprovider.h and sampleauthprovider.cpp
 
@@ -59,7 +63,7 @@ is called for each incoming Stun Message.  It takes one input parameter pointer
 to a struct instance of type AuthAttributes) and one "out" param which is a struct
 for handing back authentication tokens back to the server.
     
-  HRESULT DoAuthCheck(/*in*/ AuthAttributes* pAuthAttributes, /*out*/ AuthResponse* pResponse);
+  HRESULT DoAuthCheck([in] AuthAttributes* pAuthAttributes, [out] AuthResponse* pResponse);
  
 The AuthAttributes struct representes various attribute values received in a STUN
 binding request.  They are outlined as follows:
@@ -127,37 +131,29 @@ as appropriate:
     CStunServer::Initialize and CTCPServer::Initialize to create an instance of your class and initialize
     _spAuth as appropriate.
                
-#endif
-         
+**/
 
-
-class CShortTermAuth :
-    public CBasicRefCount,
-    public CObjectFactory<CShortTermAuth>,
-    public IStunAuth
+class CShortTermAuth : public CBasicRefCount
+, public CObjectFactory<CShortTermAuth>
+, public IStunAuth
 {
 public:
     virtual HRESULT DoAuthCheck(AuthAttributes* pAuthAttributes, AuthResponse* pResponse);
     ADDREF_AND_RELEASE_IMPL();
 };
 
-
-class CLongTermAuth :
-    public CBasicRefCount,
-    public CObjectFactory<CLongTermAuth>,
-    public IStunAuth
+class CLongTermAuth : public CBasicRefCount
+, public CObjectFactory<CLongTermAuth>
+, public IStunAuth
 {
 private:
     void HmacToString(uint8_t* hmacvalue, char* pszResult);
     HRESULT CreateNonce(char* pszNonce);
     HRESULT ValidateNonce(char* pszNonce);
-    
+
 public:
-    
     virtual HRESULT DoAuthCheck(AuthAttributes* pAuthAttributes, AuthResponse* pResponse);
     ADDREF_AND_RELEASE_IMPL();
 };
 
-
 #endif
-

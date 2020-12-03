@@ -14,19 +14,20 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
 #include "testatomichelpers.h"
-#include "atomichelpers.h"
 
+#include "atomichelpers.h"
+#include "hresult.h"
+#include "chkmacros.h"
 
 HRESULT CTestAtomicHelpers::Run()
 {
     HRESULT hr = S_OK;
-    
+
     int value = -2000;
     int nextexpected = -2000;
     int result = 0;
-    
+
     while (value < 2000)
     {
         nextexpected++;
@@ -34,7 +35,7 @@ HRESULT CTestAtomicHelpers::Run()
         ChkIf(result != nextexpected, E_UNEXPECTED);
         ChkIf(result != value, E_UNEXPECTED);
     }
-    
+
     value = 2000;
     nextexpected = 2000;
     while (value > -2000)

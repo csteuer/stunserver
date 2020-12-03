@@ -14,21 +14,21 @@
    limitations under the License.
 */
 
-
-
 #ifndef UNITTEST_DECLARE_H
 #define UNITTEST_DECLARE_H
 
+#include "hresult.h"
 
 class IUnitTest
 {
 public:
-    virtual ~IUnitTest() {};
+    virtual ~IUnitTest(){};
 
     virtual HRESULT Run() = 0;
     virtual const char* GetName() = 0;
 };
 
-#define UT_DECLARE_TEST_NAME(testname) virtual const char* GetName() {return testname;}
+#define UT_DECLARE_TEST_NAME(testname) \
+    virtual const char* GetName() { return testname; }
 
 #endif

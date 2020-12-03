@@ -18,6 +18,7 @@
 #define POLLING_H
 
 #include <cstdint>
+#include <cstddef>
 
 #include "refcountobject.h"
 #include "hresult.h"

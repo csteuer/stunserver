@@ -8,7 +8,6 @@ set(stuncore_headers
     stunbuilder.h
     stunclientlogic.h
     stunclienttests.h
-    stuncore.h
     stunreader.h
     stuntypes.h
     stunutils.h

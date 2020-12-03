@@ -14,20 +14,16 @@
    limitations under the License.
 */
 
-
-
 #ifndef STUNCLIENTTESTS_H
-#define	STUNCLIENTTESTS_H
+#define STUNCLIENTTESTS_H
 
 #include "stuntypes.h"
 #include "buffer.h"
 #include "stunbuilder.h"
+#include "stunreader.h"
 
 struct StunClientLogicConfig;
 struct StunClientResults;
-
-
-
 
 class IStunClientTest
 {
@@ -41,7 +37,6 @@ public:
     virtual bool IsCompleted() = 0;
 };
 
-
 class CStunClientTestBase : public IStunClientTest
 {
 protected:
@@ -50,13 +45,11 @@ protected:
     StunClientResults* _pResults;
     bool _fCompleted;
     StunTransactionId _transid;
-    
-    
+
     HRESULT StartBindingRequest(CStunMessageBuilder& builder);
-    
+
     HRESULT BasicReaderValidation(CRefCountedBuffer& spMsg, CStunMessageReader& reader);
-    
-    
+
 public:
     CStunClientTestBase();
     virtual HRESULT Init(StunClientLogicConfig* pConfig, StunClientResults* pResults);
@@ -64,14 +57,12 @@ public:
     virtual bool IsCompleted();
 };
 
-
 class CBasicBindingTest : public CStunClientTestBase
 {
 public:
-    
     bool IsReadyToRun();
-    HRESULT GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest) ;
-    HRESULT ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal) ;
+    HRESULT GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest);
+    HRESULT ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal);
     void NotifyTimeout();
 };
 
@@ -79,38 +70,34 @@ class CBehaviorTest : public CStunClientTestBase
 {
 protected:
     bool _fIsTest3;
-    
+
 public:
     CBehaviorTest();
-    
+
     void PreRunCheck();
     bool IsReadyToRun();
-    HRESULT GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest) ;
-    HRESULT ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal) ;
+    HRESULT GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest);
+    HRESULT ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal);
     void NotifyTimeout();
-    
+
     void RunAsTest3(bool fSetAsTest3);
 };
-
 
 class CFilteringTest : public CStunClientTestBase
 {
 protected:
     bool _fIsTest3;
-    
+
 public:
     CFilteringTest();
-    
+
     void PreRunCheck();
     bool IsReadyToRun();
-    HRESULT GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest) ;
-    HRESULT ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal) ;
+    HRESULT GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest);
+    HRESULT ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal);
     void NotifyTimeout();
-    
+
     void RunAsTest3(bool fSetAsTest3);
 };
 
-
-
-#endif	/* STUNCLIENTTESTS_H */
-
+#endif /* STUNCLIENTTESTS_H */

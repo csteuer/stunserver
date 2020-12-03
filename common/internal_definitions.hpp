@@ -14,26 +14,22 @@
    limitations under the License.
 */
 
+#ifndef STUNSERVER_COMMON_COMMONINCLUDES_H
+#define STUNSERVER_COMMON_COMMONINCLUDES_H
 
+// Fix for Lion (http://www.opensource.apple.com/source/xnu/xnu-1699.24.8/bsd/netinet6/in6.h)
+#define __APPLE_USE_RFC_3542
 
-#ifndef STUNCORE_H_
-#define STUNCORE_H_
+#if __linux || __linux__ || __gnu_linux__ || linux
+#define IS_LINUX
+#endif
 
-#include "buffer.h"
-#include "datastream.h"
-#include "socketaddress.h"
-#include "stunbuilder.h"
-#include "stunreader.h"
-#include "stuntypes.h"
-#include "stunutils.h"
-#include "messagehandler.h"
-#include "stunauth.h"
-#include "stunclienttests.h"
-#include "stunclientlogic.h"
+#define ARRAYSIZE(arr) (sizeof(arr) / sizeof(*arr))
 
+#define COMPILE_TIME_ASSERT(x) static_assert(x, #x)
 
+#ifndef UNREFERENCED_VARIABLE
+#define UNREFERENCED_VARIABLE(unrefparam) ((void)unrefparam)
+#endif
 
-
-
-
-#endif /* STUNCORE_H_ */
+#endif

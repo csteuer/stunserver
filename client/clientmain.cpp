@@ -14,9 +14,9 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-#include "stuncore.h"
-#include "socketrole.h" // so we can re-use the "SocketRole" definitions again
+#include "stunclientlogic.h"
+#include "logger.h"
+#include "socketrole.h"
 #include "stunsocket.h"
 #include "cmdlineparser.h"
 #include "recvfromex.h"
@@ -25,6 +25,8 @@
 #include "adapters.h"
 #include "oshelper.h"
 #include "prettyprint.h"
+#include "internal_definitions.hpp"
+#include "chkmacros.h"
 
 // These files are in ../resources
 #include "stunclient.txtcode"
@@ -267,7 +269,7 @@ void NatBehaviorToString(NatBehavior behavior, std::string* pStr)
             str = "Address and Port Dependent Mapping";
             break;
         default:
-            ASSERT(false);
+            assert(false);
             str = "";
             break;
     }
@@ -295,7 +297,7 @@ void NatFilteringToString(NatFiltering filtering, std::string* pStr)
             str = "Address and Port Dependent Filtering";
             break;
         default:
-            ASSERT(false);
+            assert(false);
             str = "";
             break;
     }
@@ -385,7 +387,7 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
         }
 
         // we should never get a "still waiting" return with TCP, because config.timeout is 0
-        ASSERT(hrRet != E_STUNCLIENT_STILL_WAITING);
+        assert(hrRet != E_STUNCLIENT_STILL_WAITING);
 
         if (FAILED(hrRet))
         {
@@ -444,7 +446,7 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
             if (readsize > remaining)
             {
                 // technically an error, but the client logic will figure it out
-                ASSERT(false);
+                assert(false);
                 break;
             }
 
@@ -452,7 +454,7 @@ void TcpClientLoop(StunClientLogicConfig& config, ClientSocketConfig& socketconf
             if (ret == 0)
             {
                 // server cut us off before we got all the bytes we thought we were supposed to get?
-                ASSERT(false);
+                assert(false);
                 Logging::LogMsg(LL_ALWAYS, "Lost connection");
                 break;
             }
@@ -533,7 +535,7 @@ HRESULT UdpClientLoop(StunClientLogicConfig& config, const ClientSocketConfig& s
         if (SUCCEEDED(hrRet))
         {
             addrDest.ToString(&strAddr);
-            ASSERT(spMsg->GetSize() > 0);
+            assert(spMsg->GetSize() > 0);
 
             if (Logging::GetLogLevel() >= LL_DEBUG)
             {

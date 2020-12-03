@@ -17,7 +17,8 @@
 #ifndef FASTHASH_H
 #define FASTHASH_H
 
-#include "commonincludes.hpp"
+#include <cstddef>
+#include <cstring>
 
 // FastHash is a cheap and dirty hash table template class
 //    It is "fast" because it never allocates memory beyond the static arrays inside each instance
@@ -407,8 +408,8 @@ public:
     FastHash()
     : FastHashBase<K, V>(FSIZE, TSIZE, _nodesarray, _itemnodesarray, _lookuptablearray, _indexarray)
     {
-        COMPILE_TIME_ASSERT(FSIZE > 0);
-        COMPILE_TIME_ASSERT(TSIZE > 0);
+        static_assert(FSIZE > 0, "FSIZE must be greater than zero.");
+        static_assert(TSIZE > 0, "TSIZE must be greater than zero.");
     }
 };
 

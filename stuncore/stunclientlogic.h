@@ -14,35 +14,32 @@
    limitations under the License.
 */
 
-
 #ifndef STUNCLIENTLOGIC_H
-#define	STUNCLIENTLOGIC_H
-
+#define STUNCLIENTLOGIC_H
 
 #include "stunclienttests.h"
 
-
+#include <vector>
 
 struct StunClientLogicConfig
 {
     CSocketAddress addrServer;
-    
+
     bool fTimeoutIsInstant;  // if true, then timeoutSeconds is ignored and assumed to be zero
     uint32_t timeoutSeconds; // if fTimeoutIsInstant is false, then "0" implies to use the default
     uint32_t uMaxAttempts;
-    
+
     bool fBehaviorTest;
     bool fFilteringTest;
 };
 
-
 enum NatBehavior
 {
     UnknownBehavior,
-    DirectMapping,                  // IP address and port are the same between client and server view (NO NAT)
-    EndpointIndependentMapping,     // same mapping regardless of IP:port original packet sent to (the kind of NAT we like)
-    AddressDependentMapping,        // mapping changes for local socket based on remote IP address only, but remote port can change (partially symmetric, not great)
-    AddressAndPortDependentMapping  // different port mapping if the ip address or port change (symmetric NAT, difficult to predict port mappings)
+    DirectMapping,                 // IP address and port are the same between client and server view (NO NAT)
+    EndpointIndependentMapping,    // same mapping regardless of IP:port original packet sent to (the kind of NAT we like)
+    AddressDependentMapping,       // mapping changes for local socket based on remote IP address only, but remote port can change (partially symmetric, not great)
+    AddressAndPortDependentMapping // different port mapping if the ip address or port change (symmetric NAT, difficult to predict port mappings)
 };
 
 enum NatFiltering
@@ -61,10 +58,10 @@ struct StunClientResults
     bool fIsDirect;            // true if addrLocal == addrMapped
     CSocketAddress addrLocal;  // local address
     CSocketAddress addrMapped; // mapped address from PP for local address
-    bool fHasOtherAddress;  // set to true if the basic binding request got an "other adddress" back from the server
-    CSocketAddress addrPA;  // the other address (with primary IP) as identified by the basic binding request
-    CSocketAddress addrAP;  // the other address (with primary port) as identified by the basic binding request
-    CSocketAddress addrAA;  // the other address as identified by the basic binding request
+    bool fHasOtherAddress;     // set to true if the basic binding request got an "other adddress" back from the server
+    CSocketAddress addrPA;     // the other address (with primary IP) as identified by the basic binding request
+    CSocketAddress addrAP;     // the other address (with primary port) as identified by the basic binding request
+    CSocketAddress addrAA;     // the other address as identified by the basic binding request
     // -----------------------------------------
 
     // behavior state test --------------------------
@@ -73,41 +70,36 @@ struct StunClientResults
     CSocketAddress addrMappingAP; // result of binding request for AP (behavior test 2)
     CSocketAddress addrMappingAA; // result of binding request for AA (behavior test 3)
     // -----------------------------------------
-    
+
     // filtering state test --------------------------
     bool fFilteringTestSuccess;
     NatFiltering filtering;
     bool fGotTest2Response;
     bool fGotTest3Response;
     // -----------------------------------------
-    
+
     uint32_t errorBitmask;
-    static const uint32_t SCR_TIMEOUT = 0x0001;     // a timeout occurred waiting for an expected response
+    static const uint32_t SCR_TIMEOUT = 0x0001;  // a timeout occurred waiting for an expected response
     static const uint32_t SCR_NO_OTHER = 0x0002; // the server doesn't offer an alternate address/port
-    
+
     StunClientResults();
     void Init();
 };
 
-
 #define FACILITY_STUN_CLIENT_LOGIC_ERR 0x101
-#define E_STUNCLIENT_STILL_WAITING     ((HRESULT)0x81010001)
-#define E_STUNCLIENT_RESULTS_READY     ((HRESULT)0x81010002)
-#define E_STUNCLIENT_TIMEOUT           ((HRESULT)0x81010003)
-#define E_STUNCLIENT_BUFFER_TOO_SMALL  ((HRESULT)0x81010004)
-
-
-
+#define E_STUNCLIENT_STILL_WAITING ((HRESULT)0x81010001)
+#define E_STUNCLIENT_RESULTS_READY ((HRESULT)0x81010002)
+#define E_STUNCLIENT_TIMEOUT ((HRESULT)0x81010003)
+#define E_STUNCLIENT_BUFFER_TOO_SMALL ((HRESULT)0x81010004)
 
 class CStunClientLogic
 {
 private:
-    
     StunClientLogicConfig _config;
     StunClientResults _results;
-    
+
     bool _fInitialized;
-    
+
     uint32_t _timeLastMessageSent;
     uint32_t _sendCount;
     bool _fPreCheckRunOnTest;
@@ -117,26 +109,20 @@ private:
     CBehaviorTest _testBehavior3;
     CFilteringTest _testFiltering2;
     CFilteringTest _testFiltering3;
-    
+
     std::vector<IStunClientTest*> _testlist;
     size_t _nTestIndex;
-    
+
 public:
     CStunClientLogic();
-    
+
     HRESULT Initialize(StunClientLogicConfig& config);
-    
+
     HRESULT GetNextMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest, uint32_t timeCurrentMilliseconds);
-    
+
     HRESULT ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal);
-    
+
     HRESULT GetResults(StunClientResults* pResults);
 };
 
-
-
-
-
-
-#endif	/* STUNCLIENTLOGIC_H */
-
+#endif /* STUNCLIENTLOGIC_H */

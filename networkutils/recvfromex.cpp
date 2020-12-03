@@ -14,11 +14,10 @@
    limitations under the License.
 */
 
+#include "recvfromex.h"
 
-
-#include "commonincludes.hpp"
-#include "socketaddress.h"
-
+#include <internal_definitions.hpp>
+#include <cassert>
 
 static void InitSocketAddress(int family, CSocketAddress* pAddr)
 {
@@ -36,10 +35,9 @@ static void InitSocketAddress(int family, CSocketAddress* pAddr)
     }
     else
     {
-        ASSERT(false);
+        assert(false);
     }
 }
-
 
 ssize_t recvfromex(int sockfd, void* buf, size_t len, int flags, CSocketAddress* pSrcAddr, CSocketAddress* pDstAddr)
 {
@@ -89,13 +87,12 @@ ssize_t recvfromex(int sockfd, void* buf, size_t len, int flags, CSocketAddress*
                     break;
                 }
 
-
                 // IPV4 address ----------------------------------------------------------
                 // if you change the ifdef's below, make sure you it's matched with the same logic in stunsocket.cpp
                 // Might be worthwhile to just use IP_RECVORIGDSTADDR and IP_ORIGDSTADDR so we can merge with the bsd code
 
 #ifdef IP_PKTINFO
-                if ((pCmsg->cmsg_level == IPPROTO_IP) && (pCmsg->cmsg_type==IP_PKTINFO) && CMSG_DATA(pCmsg))
+                if ((pCmsg->cmsg_level == IPPROTO_IP) && (pCmsg->cmsg_type == IP_PKTINFO) && CMSG_DATA(pCmsg))
                 {
                     struct in_pktinfo* pInfo = (in_pktinfo*)CMSG_DATA(pCmsg);
                     sockaddr_in addr = {};
@@ -105,10 +102,10 @@ ssize_t recvfromex(int sockfd, void* buf, size_t len, int flags, CSocketAddress*
                     break;
                 }
 #endif
-                
+
 #ifdef IP_RECVDSTADDR
                 // This code path for MacOSX and likely BSD as well
-                if ((pCmsg->cmsg_level == IPPROTO_IP) && (pCmsg->cmsg_type==IP_RECVDSTADDR) && CMSG_DATA(pCmsg))
+                if ((pCmsg->cmsg_level == IPPROTO_IP) && (pCmsg->cmsg_type == IP_RECVDSTADDR) && CMSG_DATA(pCmsg))
                 {
                     sockaddr_in addr = {};
                     addr.sin_family = AF_INET;
@@ -123,4 +120,3 @@ ssize_t recvfromex(int sockfd, void* buf, size_t len, int flags, CSocketAddress*
 
     return ret;
 }
-

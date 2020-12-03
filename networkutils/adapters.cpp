@@ -14,12 +14,16 @@
    limitations under the License.
 */
 
+#include "adapters.h"
 
-#include "commonincludes.hpp"
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <arpa/inet.h>
 
+#include "internal_definitions.hpp"
 // TODO - FIX THIS SUCH THAT CSocketAddress is in it's own "base" library independent of networkutils and stuncore
 #include "socketaddress.h"
-
+#include "chkmacros.h"
 
 void GetDefaultAdapters(int family, ifaddrs* pList, ifaddrs** ppAddrPrimary, ifaddrs** ppAddrAlternate)
 {
@@ -31,7 +35,7 @@ void GetDefaultAdapters(int family, ifaddrs* pList, ifaddrs** ppAddrPrimary, ifa
     pAdapter = pList;
     while (pAdapter)
     {
-        if ( (pAdapter->ifa_addr != NULL) && (pAdapter->ifa_addr->sa_family == family) && (pAdapter->ifa_flags & IFF_UP) && !(pAdapter->ifa_flags & IFF_LOOPBACK))
+        if ((pAdapter->ifa_addr != NULL) && (pAdapter->ifa_addr->sa_family == family) && (pAdapter->ifa_flags & IFF_UP) && !(pAdapter->ifa_flags & IFF_LOOPBACK))
         {
             if (*ppAddrPrimary == NULL)
             {
@@ -54,7 +58,7 @@ void GetDefaultAdapters(int family, ifaddrs* pList, ifaddrs** ppAddrPrimary, ifa
 bool HasAtLeastTwoAdapters(int family)
 {
     HRESULT hr = S_OK;
-    
+
     ifaddrs* pList = NULL;
     ifaddrs* pAdapter1 = NULL;
     ifaddrs* pAdapter2 = NULL;
@@ -66,12 +70,10 @@ bool HasAtLeastTwoAdapters(int family)
 
     fRet = (pAdapter1 && pAdapter2);
 
-
 Cleanup:
     freeifaddrs(pList);
     return fRet;
 }
-
 
 /**
  * Suggests a default adapter for a given stun server socket
@@ -96,8 +98,8 @@ HRESULT GetBestAddressForSocketBind(bool fPrimary, int family, uint16_t port, CS
 
     pAdapter = fPrimary ? pAdapter1 : pAdapter2;
 
-    ChkIf(pAdapter==NULL, E_FAIL);
-    ChkIfA(pAdapter->ifa_addr==NULL, E_UNEXPECTED);
+    ChkIf(pAdapter == NULL, E_FAIL);
+    ChkIfA(pAdapter->ifa_addr == NULL, E_UNEXPECTED);
 
     *pSocketAddr = CSocketAddress(*pAdapter->ifa_addr);
     pSocketAddr->SetPort(port);
@@ -107,7 +109,6 @@ Cleanup:
     return hr;
 }
 
-
 HRESULT GetSocketAddressForAdapter(int family, const char* pszAdapterName, uint16_t port, CSocketAddress* pSocketAddr)
 {
     HRESULT hr = S_OK;
@@ -115,12 +116,9 @@ HRESULT GetSocketAddressForAdapter(int family, const char* pszAdapterName, uint1
     ifaddrs* pAdapter = NULL;
     ifaddrs* pAdapterFound = NULL;
 
-
     ChkIfA(pszAdapterName == NULL, E_INVALIDARG);
     ChkIfA(pszAdapterName[0] == '\0', E_INVALIDARG);
     ChkIfA(pSocketAddr == NULL, E_INVALIDARG);
-
-
 
     // what if the socket address is available, but not "up".  Well, just let this call succeed.  If the server errors out, it will get cleaned up then
     ChkIf(getifaddrs(&pList) < 0, ERRNOHR);
@@ -138,47 +136,45 @@ HRESULT GetSocketAddressForAdapter(int family, const char* pszAdapterName, uint1
         pAdapter = pAdapter->ifa_next;
     }
 
-
     // If pszAdapterName is an IP address, convert it into a sockaddr and compare the address field with that of the adapter
     // Note: an alternative approach would be to convert pAdapter->ifa_addr to a string and then do a string compare.
     // But then it would be difficult to match "::1" with "0:0:0:0:0:0:0:1" and other formats of IPV6 strings
-    if ((pAdapterFound == NULL) && ((family == AF_INET) || (family == AF_INET6)) )
+    if ((pAdapterFound == NULL) && ((family == AF_INET) || (family == AF_INET6)))
     {
         uint8_t addrbytes[sizeof(in6_addr)] = {};
         int comparesize = (family == AF_INET) ? sizeof(in_addr) : sizeof(in6_addr);
         void* pCmp = NULL;
 
-
         if (inet_pton(family, pszAdapterName, addrbytes) == 1)
         {
-             pAdapter = pList;
-             while (pAdapter)
-             {
-                 if ((pAdapter->ifa_addr != NULL) && (family == pAdapter->ifa_addr->sa_family))
-                 {
-                     // offsetof(sockaddr_in, sin_addr) != offsetof(sockaddr_in6, sin6_addr)
-                     // so you really can't do too many casting tricks like you can with sockaddr and sockaddr_in
+            pAdapter = pList;
+            while (pAdapter)
+            {
+                if ((pAdapter->ifa_addr != NULL) && (family == pAdapter->ifa_addr->sa_family))
+                {
+                    // offsetof(sockaddr_in, sin_addr) != offsetof(sockaddr_in6, sin6_addr)
+                    // so you really can't do too many casting tricks like you can with sockaddr and sockaddr_in
 
-                     if (family == AF_INET)
-                     {
-                         sockaddr_in *pAddr4 = (sockaddr_in*)(pAdapter->ifa_addr);
-                         pCmp = &(pAddr4->sin_addr);
-                     }
-                     else
-                     {
-                         sockaddr_in6 *pAddr6 = (sockaddr_in6*)(pAdapter->ifa_addr);
-                         pCmp = &(pAddr6->sin6_addr);
-                     }
+                    if (family == AF_INET)
+                    {
+                        sockaddr_in* pAddr4 = (sockaddr_in*)(pAdapter->ifa_addr);
+                        pCmp = &(pAddr4->sin_addr);
+                    }
+                    else
+                    {
+                        sockaddr_in6* pAddr6 = (sockaddr_in6*)(pAdapter->ifa_addr);
+                        pCmp = &(pAddr6->sin6_addr);
+                    }
 
-                     if (memcmp(pCmp, addrbytes, comparesize) == 0)
-                     {
-                         // match on ip address string found
-                         pAdapterFound = pAdapter;
-                         break;
-                     }
-                 }
-                 pAdapter = pAdapter->ifa_next;
-             }
+                    if (memcmp(pCmp, addrbytes, comparesize) == 0)
+                    {
+                        // match on ip address string found
+                        pAdapterFound = pAdapter;
+                        break;
+                    }
+                }
+                pAdapter = pAdapter->ifa_next;
+            }
         }
     }
 
@@ -193,7 +189,4 @@ Cleanup:
 
     freeifaddrs(pList);
     return hr;
-
 }
-
-

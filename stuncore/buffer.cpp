@@ -14,8 +14,9 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
 #include "buffer.h"
+
+#include <cstring>
 
 CBuffer::CBuffer()
 : _data(NULL)

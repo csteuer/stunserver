@@ -14,16 +14,11 @@
    limitations under the License.
 */
 
-
-
-#include "commonincludes.hpp"
-#include "stuncore.h"
 #include "stunclientlogic.h"
-
 
 #include "stunclienttests.h"
 #include "stunclientlogic.h"
-
+#include "chkmacros.h"
 
 StunClientResults::StunClientResults()
 {
@@ -36,7 +31,7 @@ void StunClientResults::Init()
 
     fBindingTestSuccess = false;
     fIsDirect = false;
-    fHasOtherAddress = false;  // set to true if the basic binding request got an "other adddress" back from the server
+    fHasOtherAddress = false; // set to true if the basic binding request got an "other adddress" back from the server
     fBehaviorTestSuccess = false;
     behavior = UnknownBehavior;
     fFilteringTestSuccess = false;
@@ -55,15 +50,13 @@ void StunClientResults::Init()
     errorBitmask = 0;
 }
 
-CStunClientLogic::CStunClientLogic() :
-_fInitialized(false),
-_timeLastMessageSent(0),
-_sendCount(0),
-_nTestIndex(0)
+CStunClientLogic::CStunClientLogic()
+: _fInitialized(false)
+, _timeLastMessageSent(0)
+, _sendCount(0)
+, _nTestIndex(0)
 {
-
 }
-
 
 HRESULT CStunClientLogic::Initialize(StunClientLogicConfig& config)
 {
@@ -74,16 +67,13 @@ HRESULT CStunClientLogic::Initialize(StunClientLogicConfig& config)
     // Too much code in the tests expects everything in a clean state
     ChkIfA(_fInitialized, E_UNEXPECTED);
 
-
     ChkIfA(config.addrServer.IsIPAddressZero(), E_INVALIDARG);
     ChkIfA(config.addrServer.GetPort() == 0, E_INVALIDARG);
 
-
     _config = config;
 
-
     _fInitialized = true;
-    
+
     if (_config.fTimeoutIsInstant)
     {
         _config.timeoutSeconds = 0;
@@ -92,7 +82,6 @@ HRESULT CStunClientLogic::Initialize(StunClientLogicConfig& config)
     {
         _config.timeoutSeconds = 3; // default to waiting for 3 seconds
     }
-    
 
     if (_config.uMaxAttempts <= 0)
     {
@@ -107,7 +96,6 @@ HRESULT CStunClientLogic::Initialize(StunClientLogicConfig& config)
     _test1.Init(&_config, &_results);
     _testlist.push_back(&_test1);
 
-
     if (_config.fFilteringTest)
     {
         _testFiltering2.Init(&_config, &_results);
@@ -117,7 +105,7 @@ HRESULT CStunClientLogic::Initialize(StunClientLogicConfig& config)
         _testFiltering3.RunAsTest3(true);
         _testlist.push_back(&_testFiltering3);
     }
-    
+
     if (_config.fBehaviorTest)
     {
         _testBehavior2.Init(&_config, &_results);
@@ -150,8 +138,7 @@ HRESULT CStunClientLogic::GetNextMessage(CRefCountedBuffer& spMsg, CSocketAddres
     // clients should pass in the expected size
     ChkIfA(spMsg->GetAllocatedSize() < MAX_STUN_MESSAGE_SIZE, E_INVALIDARG);
 
-
-    while (fReadyToReturn==false)
+    while (fReadyToReturn == false)
     {
         if (_nTestIndex >= _testlist.size())
         {
@@ -161,16 +148,15 @@ HRESULT CStunClientLogic::GetNextMessage(CRefCountedBuffer& spMsg, CSocketAddres
 
         pCurrentTest = _testlist[_nTestIndex];
 
-        if (_fPreCheckRunOnTest==false)
+        if (_fPreCheckRunOnTest == false)
         {
             // give the test an early chance to complete before sending a message (based on results of previous test)
             pCurrentTest->PreRunCheck();
             _fPreCheckRunOnTest = true;
         }
 
-
         // has this test completed or is it in a state in which it can't run?
-        if (pCurrentTest->IsCompleted() || pCurrentTest->IsReadyToRun()==false)
+        if (pCurrentTest->IsCompleted() || pCurrentTest->IsReadyToRun() == false)
         {
             // increment to the next test
             _nTestIndex++;
@@ -194,13 +180,13 @@ HRESULT CStunClientLogic::GetNextMessage(CRefCountedBuffer& spMsg, CSocketAddres
             // notify the test that it has timed out
             // this should put it in the completed state (and we increment to next test on next loop)
             pCurrentTest->NotifyTimeout();
-            ASSERT(pCurrentTest->IsCompleted());
+            assert(pCurrentTest->IsCompleted());
             continue;
         }
 
         // ok - we are ready to go fetch a message
         hr = pCurrentTest->GetMessage(spMsg, pAddrDest);
-        ASSERT(SUCCEEDED(hr));
+        assert(SUCCEEDED(hr));
         if (FAILED(hr))
         {
             break;
@@ -223,7 +209,7 @@ HRESULT CStunClientLogic::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddre
 
     ChkIfA(_fInitialized == false, E_FAIL);
     ChkIfA(spMsg->GetSize() == 0, E_INVALIDARG);
-    ChkIf (_nTestIndex >= _testlist.size(), E_UNEXPECTED);
+    ChkIf(_nTestIndex >= _testlist.size(), E_UNEXPECTED);
 
     pCurrentTest = _testlist[_nTestIndex];
 
@@ -240,10 +226,9 @@ Cleanup:
 
 HRESULT CStunClientLogic::GetResults(StunClientResults* pResults)
 {
-    HRESULT hr=S_OK;
+    HRESULT hr = S_OK;
     ChkIfA(pResults == NULL, E_INVALIDARG);
     *pResults = _results;
 Cleanup:
     return hr;
 }
-

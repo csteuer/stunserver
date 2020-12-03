@@ -14,9 +14,10 @@
    limitations under the License.
 */
 
+#include "prettyprint.h"
 
-#include "commonincludes.hpp"
-
+#include <string>
+#include <vector>
 
 static bool IsWhitespace(char ch)
 {
@@ -44,7 +45,7 @@ static void SplitParagraphIntoWords(const char* pszLine, std::vector<std::string
             return;
         }
 
-        while ((*pszLine) && IsWhitespace(*pszLine)==false)
+        while ((*pszLine) && IsWhitespace(*pszLine) == false)
         {
             strWord += *pszLine;
             pszLine++;
@@ -94,7 +95,7 @@ static void SplitInputIntoParagraphs(const char* pszInput, std::vector<std::stri
 static void PrintParagraph(const char* psz, size_t width)
 {
     size_t indent = 0;
-    const char *pszProbe = psz;
+    const char* pszProbe = psz;
     std::vector<std::string> listWords;
     bool fLineStart = true;
     std::string strLine;
@@ -107,7 +108,7 @@ static void PrintParagraph(const char* psz, size_t width)
         return;
     }
 
-    if (psz==NULL)
+    if (psz == NULL)
     {
         return;
     }
@@ -123,7 +124,7 @@ static void PrintParagraph(const char* psz, size_t width)
 
     if (indent >= width)
     {
-        indent = width-1;
+        indent = width - 1;
     }
     for (size_t x = 0; x < indent; x++)
     {
@@ -163,19 +164,14 @@ static void PrintParagraph(const char* psz, size_t width)
 
                 // flag that we got a new line starting
                 fLineStart = true;
-
             }
         }
-
     }
 
     if ((strLine.size() > 0) || (wordcount == 0))
     {
         printf("%s\n", strLine.c_str());
     }
-
-
-
 }
 
 void PrettyPrint(const char* pszInput, size_t width)
@@ -191,4 +187,3 @@ void PrettyPrint(const char* pszInput, size_t width)
         PrintParagraph(listParagraphs[x].c_str(), width);
     }
 }
-

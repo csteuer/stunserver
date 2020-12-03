@@ -14,13 +14,15 @@
    limitations under the License.
 */
 
-
-#include "commonincludes.hpp"
 #include "socketaddress.h"
 
+#include "internal_definitions.hpp"
+#include "chkmacros.h"
 
-CSocketAddress::CSocketAddress() :
-_address() // zero-init
+#include <arpa/inet.h>
+
+CSocketAddress::CSocketAddress()
+: _address() // zero-init
 {
     _address.addr4.sin_family = AF_INET;
 }
@@ -35,10 +37,9 @@ CSocketAddress::CSocketAddress(const sockaddr_storage& addr)
     CommonConstructor(*(sockaddr*)&addr);
 }
 
-
 void CSocketAddress::CommonConstructor(const sockaddr& addr)
 {
-    ASSERT((addr.sa_family == AF_INET) || (addr.sa_family==AF_INET6));
+    assert((addr.sa_family == AF_INET) || (addr.sa_family == AF_INET6));
 
     if (addr.sa_family == AF_INET6)
     {
@@ -56,13 +57,13 @@ void CSocketAddress::CommonConstructor(const sockaddr& addr)
 
 CSocketAddress::CSocketAddress(const sockaddr_in6& addr6)
 {
-    ASSERT(addr6.sin6_family==AF_INET6);
+    assert(addr6.sin6_family == AF_INET6);
     _address.addr6 = addr6;
 }
 
 CSocketAddress::CSocketAddress(const sockaddr_in& addr4)
 {
-    ASSERT(addr4.sin_family == AF_INET);
+    assert(addr4.sin_family == AF_INET);
     _address.addr4 = addr4;
 }
 
@@ -115,13 +116,12 @@ uint16_t CSocketAddress::GetIPLength() const
     }
     else
     {
-        length  = sizeof(_address.addr6.sin6_addr.s6_addr);
+        length = sizeof(_address.addr6.sin6_addr.s6_addr);
     }
 
-    ASSERT((length == STUN_IPV4_LENGTH) || (length == STUN_IPV6_LENGTH));
+    assert((length == STUN_IPV4_LENGTH) || (length == STUN_IPV6_LENGTH));
     return length;
 }
-
 
 size_t CSocketAddress::GetIPImpl(void* pAddr, size_t length, bool fNBO) const
 {
@@ -132,23 +132,23 @@ size_t CSocketAddress::GetIPImpl(void* pAddr, size_t length, bool fNBO) const
     ChkIfA(length <= 0, E_INVALIDARG);
     ChkIfA(length < GetIPLength(), E_INVALIDARG);
 
-    ASSERT((_address.addr.sa_family == AF_INET)||(_address.addr.sa_family == AF_INET6));
+    assert((_address.addr.sa_family == AF_INET) || (_address.addr.sa_family == AF_INET6));
 
     if (_address.addr.sa_family == AF_INET)
     {
         uint32_t ip = _address.addr4.sin_addr.s_addr;
-        if (fNBO==false)
+        if (fNBO == false)
         {
             ip = htonl(ip);
         }
         memcpy(pAddr, &ip, sizeof(ip));
         bytescopied = sizeof(ip);
-        ASSERT(sizeof(ip) == STUN_IPV4_LENGTH);
+        assert(sizeof(ip) == STUN_IPV4_LENGTH);
     }
     else
     {
         // ipv6 addresses are the same in either byte ordering - just an array of 16 bytes
-        ASSERT(sizeof(_address.addr6.sin6_addr.s6_addr) == STUN_IPV6_LENGTH);
+        assert(sizeof(_address.addr6.sin6_addr.s6_addr) == STUN_IPV6_LENGTH);
 
         memcpy(pAddr, &_address.addr6.sin6_addr.s6_addr, sizeof(_address.addr6.sin6_addr.s6_addr));
         bytescopied = STUN_IPV6_LENGTH;
@@ -156,15 +156,12 @@ size_t CSocketAddress::GetIPImpl(void* pAddr, size_t length, bool fNBO) const
 
 Cleanup:
     return bytescopied;
-
 }
-
 
 size_t CSocketAddress::GetIP(void* pAddr, size_t length) const // returns the number of bytes copied, or Zero on error
 {
     return GetIPImpl(pAddr, length, false);
 }
-
 
 size_t CSocketAddress::GetIP_NBO(void* pAddr, size_t length) const // returns the number of bytes copied, or Zero on error
 {
@@ -175,7 +172,6 @@ uint16_t CSocketAddress::GetFamily() const
 {
     return _address.addr.sa_family;
 }
-
 
 void CSocketAddress::ApplyStunXorMap(const StunTransactionId& transid)
 {
@@ -198,16 +194,15 @@ void CSocketAddress::ApplyStunXorMap(const StunTransactionId& transid)
         pPort = (uint8_t*)&(_address.addr6.sin6_port);
         pIP = (uint8_t*)&(_address.addr6.sin6_addr);
     }
-    
+
     pPort[0] = pPort[0] ^ transid.id[0];
     pPort[1] = pPort[1] ^ transid.id[1];
-    
+
     for (size_t i = 0; i < iplen; i++)
     {
         pIP[i] = pIP[i] ^ transid.id[i];
     }
 }
-
 
 const sockaddr* CSocketAddress::GetSockAddr() const
 {
@@ -230,8 +225,6 @@ bool CSocketAddress::IsSameIP(const CSocketAddress& other) const
 {
     bool fRet = false;
 
-
-
     if (_address.addr.sa_family == other._address.addr.sa_family)
     {
         if (_address.addr.sa_family == AF_INET)
@@ -244,7 +237,7 @@ bool CSocketAddress::IsSameIP(const CSocketAddress& other) const
         }
         else
         {
-            ASSERT(false); // comparing an address that is neither IPV4 or IPV6?
+            assert(false); // comparing an address that is neither IPV4 or IPV6?
             fRet = !memcmp(&_address.addr.sa_data, &other._address.addr.sa_data, sizeof(_address.addr.sa_data));
         }
     }
@@ -254,9 +247,8 @@ bool CSocketAddress::IsSameIP(const CSocketAddress& other) const
 
 bool CSocketAddress::IsSameIP_and_Port(const CSocketAddress& other) const
 {
-    return (IsSameIP(other) && (GetPort() == other.GetPort()) );
+    return (IsSameIP(other) && (GetPort() == other.GetPort()));
 }
-
 
 bool CSocketAddress::IsIPAddressZero() const
 {
@@ -273,13 +265,12 @@ bool CSocketAddress::IsIPAddressZero() const
     }
     else
     {
-        ASSERT(false); // comparing an address that is neither IPV4 or IPV6?
+        assert(false); // comparing an address that is neither IPV4 or IPV6?
         fRet = !memcmp(&_address.addr.sa_data, ZERO_ARRAY, sizeof(_address.addr.sa_data));
     }
 
     return fRet;
 }
-
 
 void CSocketAddress::ToString(std::string* pStr) const
 {
@@ -291,12 +282,11 @@ HRESULT CSocketAddress::ToStringBuffer(char* pszAddrBytes, size_t length) const
 {
     HRESULT hr = S_OK;
     int family = GetFamily();
-    const void *pAddrBytes = NULL;
+    const void* pAddrBytes = NULL;
     const char* pszResult = NULL;
     const size_t portLength = 6; // colon plus 5 digit string e.g. ":55555"
-    char szPort[portLength+1];
+    char szPort[portLength + 1];
     char delimiter = (family == AF_INET) ? ':' : '.';
-
 
     ChkIfA(pszAddrBytes == NULL, E_INVALIDARG);
     ChkIf(length <= 0, E_INVALIDARG);
@@ -305,12 +295,12 @@ HRESULT CSocketAddress::ToStringBuffer(char* pszAddrBytes, size_t length) const
     if (family == AF_INET)
     {
         pAddrBytes = &(_address.addr4.sin_addr);
-        ChkIf(length < (INET_ADDRSTRLEN+portLength), E_INVALIDARG);
+        ChkIf(length < (INET_ADDRSTRLEN + portLength), E_INVALIDARG);
     }
     else if (family == AF_INET6)
     {
         pAddrBytes = &(_address.addr6.sin6_addr);
-        ChkIf(length < (INET6_ADDRSTRLEN+portLength), E_INVALIDARG);
+        ChkIf(length < (INET6_ADDRSTRLEN + portLength), E_INVALIDARG);
     }
     else
     {
@@ -332,18 +322,16 @@ Cleanup:
     return hr;
 }
 
-
-
 HRESULT CSocketAddress::GetLocalHost(uint16_t family, CSocketAddress* pAddr)
 {
-    
-    if (  ((family != AF_INET) && (family != AF_INET6)) || 
-          (pAddr == NULL))
+
+    if (((family != AF_INET) && (family != AF_INET6)) ||
+        (pAddr == NULL))
     {
-        ASSERT(false);
+        assert(false);
         return E_FAIL;
     }
-    
+
     if (family == AF_INET)
     {
         uint32_t ip = 0x7f000001; // 127.0.0.1 in host byte order
@@ -353,7 +341,7 @@ HRESULT CSocketAddress::GetLocalHost(uint16_t family, CSocketAddress* pAddr)
     {
         sockaddr_in6 addr6 = {};
         COMPILE_TIME_ASSERT(sizeof(addr6.sin6_addr) == 16);
-        
+
         // ::1
         uint8_t ip6[16] = {};
         ip6[15] = 1;
@@ -362,7 +350,6 @@ HRESULT CSocketAddress::GetLocalHost(uint16_t family, CSocketAddress* pAddr)
         memcpy(&addr6.sin6_addr, ip6, 16);
         *pAddr = CSocketAddress(addr6);
     }
-    
+
     return S_OK;
 }
-

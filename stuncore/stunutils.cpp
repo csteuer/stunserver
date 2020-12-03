@@ -14,21 +14,18 @@
    limitations under the License.
 */
 
+#include "stunutils.h"
 
-
-#include "commonincludes.hpp"
 #include "stuntypes.h"
-#include "socketaddress.h"
 #include "buffer.h"
 #include "datastream.h"
-
+#include "chkmacros.h"
 
 bool IsTransactionIdValid(StunTransactionId& transid)
 {
     uint8_t zerobytes[sizeof(transid.id)] = {}; // zero-init
     return (0 != memcmp(&transid.id, zerobytes, sizeof(zerobytes)));
 }
-
 
 HRESULT GetMappedAddress(uint8_t* pData, size_t size, CSocketAddress* pAddr)
 {
@@ -38,11 +35,10 @@ HRESULT GetMappedAddress(uint8_t* pData, size_t size, CSocketAddress* pAddr)
     uint8_t ip6[STUN_IPV6_LENGTH];
     uint32_t ip4;
 
-
     CRefCountedBuffer spBuffer(new CBuffer(pData, size, false));
     CDataStream stream(spBuffer);
 
-    ChkIfA(pAddr==NULL, E_INVALIDARG);
+    ChkIfA(pAddr == NULL, E_INVALIDARG);
 
     Chk(stream.SeekDirect(1)); // skip over the zero byte
 
@@ -58,7 +54,7 @@ HRESULT GetMappedAddress(uint8_t* pData, size_t size, CSocketAddress* pAddr)
     }
     else
     {
-        sockaddr_in6 addr6={};
+        sockaddr_in6 addr6 = {};
         Chk(stream.Read(ip6, STUN_IPV6_LENGTH));
         addr6.sin6_family = AF_INET6;
         addr6.sin6_port = htons(port);
@@ -70,7 +66,7 @@ Cleanup:
     return hr;
 }
 
-HRESULT GetXorMappedAddress(uint8_t* pData, size_t size, StunTransactionId &transid, CSocketAddress* pAddr)
+HRESULT GetXorMappedAddress(uint8_t* pData, size_t size, StunTransactionId& transid, CSocketAddress* pAddr)
 {
 
     HRESULT hr = S_OK;
@@ -81,7 +77,4 @@ HRESULT GetXorMappedAddress(uint8_t* pData, size_t size, StunTransactionId &tran
 
 Cleanup:
     return hr;
-
-
 }
-

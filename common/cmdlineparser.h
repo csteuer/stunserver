@@ -14,20 +14,22 @@
    limitations under the License.
 */
 
-
 #ifndef CMDLINEPARSER_H
-#define	CMDLINEPARSER_H
+#define CMDLINEPARSER_H
 
 #include <getopt.h>
+#include <vector>
+#include <string>
+
+#include "hresult.h"
 
 class CCmdLineParser
 {
     const option* GenerateOptions();
 
     std::vector<option> _options;
-    
-    std::vector<std::string*> _namelessArgs;
 
+    std::vector<std::string*> _namelessArgs;
 
     struct OptionDetail
     {
@@ -44,6 +46,4 @@ public:
     HRESULT ParseCommandLine(int argc, char** argv, int startindex, bool* fParseError);
 };
 
-
-#endif	/* CMDLINEPARSER_H */
-
+#endif /* CMDLINEPARSER_H */

@@ -14,27 +14,24 @@
    limitations under the License.
 */
 
-
-
 #ifndef STUN_TEST_READER
 #define STUN_TEST_READER
 
 #include "unittest.h"
 
+#include <cstddef>
+
 class CTestReader : public IUnitTest
 {
-    
+
     HRESULT TestFixedReadSizes(size_t chunksize);
-    
+
 public:
-
-
     HRESULT Test1();
     HRESULT Test2();
     HRESULT Run();
 
     UT_DECLARE_TEST_NAME("CTestReader");
 };
-
 
 #endif

@@ -14,24 +14,23 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-
-#include "stuncore.h"
 #include "server.h"
 #include "tcpserver.h"
 #include "adapters.h"
 #include "cmdlineparser.h"
-
-#include <getopt.h>
-
 #include "prettyprint.h"
 #include "oshelper.h"
 #include "stringhelper.h"
+#include "logger.h"
+#include "internal_definitions.hpp"
 
 // these are auto-generated files made from markdown sources.  See ../resources
 #include "stunserver.txtcode"
 #include "stunserver_lite.txtcode"
 #include "resolvehostname.h"
+
+#include <getopt.h>
+#include <signal.h>
 
 #ifdef WITH_CONFIGFILE_SUPPORT
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS

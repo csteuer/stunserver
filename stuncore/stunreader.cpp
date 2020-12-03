@@ -14,12 +14,12 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-
 #include "socketaddress.h"
 #include "stunreader.h"
 #include "stunutils.h"
 #include "crc32.h"
+#include "chkmacros.h"
+#include "internal_definitions.hpp"
 
 #ifndef __APPLE__
 #include <openssl/evp.h>
@@ -72,10 +72,10 @@ uint16_t CStunMessageReader::HowManyBytesNeeded()
     switch (_state)
     {
         case HeaderNotRead:
-            ASSERT(STUN_HEADER_SIZE > currentSize);
+            assert(STUN_HEADER_SIZE > currentSize);
             return STUN_HEADER_SIZE - currentSize;
         case HeaderValidated:
-            ASSERT((_msgLength + STUN_HEADER_SIZE) > currentSize);
+            assert((_msgLength + STUN_HEADER_SIZE) > currentSize);
             return (_msgLength + STUN_HEADER_SIZE) - currentSize;
         default:
             return 0;
@@ -249,7 +249,7 @@ HRESULT CStunMessageReader::ValidateMessageIntegrity(uint8_t* key,
     // through to the start of the integrity attribute header the stun message has
     // to be a multiple of 4 bytes, so we can read in 32 bit chunks
     nChunks = len / 4;
-    ASSERT((len % 4) == 0);
+    assert((len % 4) == 0);
     for (size_t count = 0; count < nChunks; count++)
     {
         Chk(stream.ReadUint32(&chunk32));
@@ -344,7 +344,7 @@ HRESULT CStunMessageReader::ValidateMessageIntegrityLong(
     }
     *pDst = '0'; // null terminate for debugging (does not get hashed)
 
-    ASSERT(key + totallength == pDst);
+    assert(key + totallength == pDst);
 
 #ifndef __APPLE__
     ChkIfA(NULL == MD5(key, totallength, hash), E_FAIL);

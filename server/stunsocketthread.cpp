@@ -14,12 +14,11 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-#include "stuncore.h"
-#include "stunsocket.h"
 #include "stunsocketthread.h"
+#include "logger.h"
 #include "recvfromex.h"
-#include "ratelimiter.h"
+#include "chkmacros.h"
+#include "internal_definitions.hpp"
 
 CStunSocketThread::CStunSocketThread()
 : _arrSendSockets()
@@ -162,7 +161,7 @@ HRESULT CStunSocketThread::SignalForStop(bool fPostMessages)
         {
             char data = 'x';
 
-            ASSERT(_socks[index] != NULL);
+            assert(_socks[index] != NULL);
 
             CSocketAddress addr(_socks[index]->GetLocalAddress());
 
@@ -223,15 +222,15 @@ CStunSocket* CStunSocketThread::WaitForSocketData()
 
     // rotation gives another socket priority in the next loop
     _rotation = (_rotation + 1) % nSocketCount;
-    ASSERT(_rotation >= 0);
+    assert(_rotation >= 0);
 
     FD_ZERO(&set);
 
     for (size_t index = 0; index < nSocketCount; index++)
     {
-        ASSERT(_socks[index] != NULL);
+        assert(_socks[index] != NULL);
         int sock = _socks[index]->GetSocketHandle();
-        ASSERT(sock != -1);
+        assert(sock != -1);
         FD_SET(sock, &set);
         nHighestSockValue = (sock > nHighestSockValue) ? sock : nHighestSockValue;
     }
@@ -239,7 +238,7 @@ CStunSocket* CStunSocketThread::WaitForSocketData()
     // wait indefinitely for a socket
     ret = ::select(nHighestSockValue + 1, &set, NULL, NULL, NULL);
 
-    ASSERT(ret > 0); // This will be a benign assert, and should never happen.  But I will want to know if it does
+    assert(ret > 0); // This will be a benign assert, and should never happen.  But I will want to know if it does
 
     // now figure out which socket just got data on it
     for (size_t index = 0; index < nSocketCount; index++)
@@ -247,7 +246,7 @@ CStunSocket* CStunSocketThread::WaitForSocketData()
         int indexconverted = (index + _rotation) % nSocketCount;
         int sock = _socks[indexconverted]->GetSocketHandle();
 
-        ASSERT(sock != -1);
+        assert(sock != -1);
 
         if (FD_ISSET(sock, &set))
         {
@@ -256,7 +255,7 @@ CStunSocket* CStunSocketThread::WaitForSocketData()
         }
     }
 
-    ASSERT(pReadySocket != NULL);
+    assert(pReadySocket != NULL);
 
     return pReadySocket;
 }
@@ -293,7 +292,7 @@ void CStunSocketThread::Run()
                 break;
             }
 
-            ASSERT(pSocket != NULL);
+            assert(pSocket != NULL);
 
             if (pSocket == NULL)
             {
@@ -302,7 +301,7 @@ void CStunSocketThread::Run()
             }
         }
 
-        ASSERT(pSocket != NULL);
+        assert(pSocket != NULL);
 
         // now receive the data
         _spBufferIn->SetSize(0);
@@ -378,10 +377,10 @@ HRESULT CStunSocketThread::ProcessRequestAndSendResponse()
 
     Chk(CStunRequestHandler::ProcessRequest(_msgIn, _msgOut, &_tsa, _spAuth));
 
-    ASSERT(_tsa.set[_msgOut.socketrole].fValid);
-    ASSERT(_arrSendSockets[_msgOut.socketrole].IsValid());
+    assert(_tsa.set[_msgOut.socketrole].fValid);
+    assert(_arrSendSockets[_msgOut.socketrole].IsValid());
     sockout = _arrSendSockets[_msgOut.socketrole].GetSocketHandle();
-    ASSERT(sockout != -1);
+    assert(sockout != -1);
 
     // find the socket that matches the role specified by msgOut
     sendret = ::sendto(sockout, _spBufferOut->GetData(), _spBufferOut->GetSize(), 0, _msgOut.addrDest.GetSockAddr(), _msgOut.addrDest.GetSockAddrLength());

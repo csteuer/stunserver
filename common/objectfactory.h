@@ -15,18 +15,15 @@
 */
 
 #ifndef _OBJECTFACTORY_H
-#define	_OBJECTFACTORY_H
+#define _OBJECTFACTORY_H
 
+#include "chkmacros.h"
 
-
-
-
-template <typename T>
+template<typename T>
 class CObjectFactory
 {
 public:
-
-    template <typename X>
+    template<typename X>
     static HRESULT CreateInstanceNoInit(X** ppInstance)
     {
         T* pT = NULL;
@@ -46,9 +43,8 @@ public:
         *ppInstance = pT;
         return S_OK;
     }
-    
 
-    template <typename I>
+    template<typename I>
     static HRESULT CreateInstance(I** ppI)
     {
         T* pInstance = NULL;
@@ -69,7 +65,7 @@ public:
         return hr;
     }
 
-    template <typename A, typename I>
+    template<typename A, typename I>
     static HRESULT CreateInstance(A paramA, I** ppI)
     {
         T* pInstance = NULL;
@@ -90,7 +86,7 @@ public:
         return hr;
     }
 
-    template <typename A, typename B, typename I>
+    template<typename A, typename B, typename I>
     static HRESULT CreateInstance(A paramA, B paramB, I** ppI)
     {
         T* pInstance = NULL;
@@ -110,10 +106,6 @@ public:
         }
         return hr;
     }
-
 };
 
-
-
-#endif	/* _OBJECTFACTORY_H */
-
+#endif /* _OBJECTFACTORY_H */

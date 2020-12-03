@@ -14,20 +14,17 @@
    limitations under the License.
 */
 
-
 #ifndef TESTCMDLINE_H
-#define	TESTCMDLINE_H
+#define TESTCMDLINE_H
+
+#include "unittest.h"
 
 class CTestCmdLineParser : public IUnitTest
 {
 public:
-
-
     HRESULT Run();
 
     UT_DECLARE_TEST_NAME("CTestCmdLineParser");
 };
 
-
-#endif	/* TESTCMDLINE_H */
-
+#endif /* TESTCMDLINE_H */

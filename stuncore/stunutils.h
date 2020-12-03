@@ -14,14 +14,14 @@
    limitations under the License.
 */
 
-
-
 #ifndef STUN_UTILS_H
 #define STUN_UTILS_H
 
+#include "socketaddress.h"
+#include "hresult.h"
 
 bool IsTransactionIdValid(StunTransactionId& transid);
-HRESULT GetXorMappedAddress(uint8_t* pData, size_t size, StunTransactionId &transid, CSocketAddress* pAddr);
+HRESULT GetXorMappedAddress(uint8_t* pData, size_t size, StunTransactionId& transid, CSocketAddress* pAddr);
 HRESULT GetMappedAddress(uint8_t* pData, size_t size, CSocketAddress* pAddr);
 
 #endif

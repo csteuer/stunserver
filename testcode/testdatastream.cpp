@@ -14,11 +14,12 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-#include "stuncore.h"
-
 #include "testdatastream.h"
 
+#include "datastream.h"
+#include "chkmacros.h"
+
+#include <cstring>
 
 // This test validates the code in stuncore\datastream.cpp
 HRESULT CTestDataStream::Run()
@@ -30,8 +31,7 @@ HRESULT CTestDataStream::Run()
     const char* str2 = "KLMNOPQRSTUVW";
     const char* str3 = "mnop";
     const char* str4 = "XYZ";
-    char ch1= ' ', ch2=' ', ch3= ' ';
-
+    char ch1 = ' ', ch2 = ' ', ch3 = ' ';
 
     Chk(stream.Write(str1, strlen(str1)));
     Chk(stream.Write(str2, strlen(str2)));
@@ -55,6 +55,4 @@ HRESULT CTestDataStream::Run()
 
 Cleanup:
     return hr;
-
-
 }

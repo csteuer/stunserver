@@ -14,10 +14,12 @@
    limitations under the License.
 */
 
+#include <cstdint>
+#include <ctime>
 
-#include "commonincludes.hpp"
+#include <sys/time.h>
+
 #include "oshelper.h"
-
 
 static uint32_t GetMillisecondCounterUnix()
 {
@@ -35,6 +37,6 @@ uint32_t GetMillisecondCounter()
 #ifdef _WIN32
     return GetTickCount();
 #else
-    return GetMillisecondCounterUnix();    
+    return GetMillisecondCounterUnix();
 #endif
 }

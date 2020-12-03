@@ -14,12 +14,13 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
+#include "stunbuilder.h"
 
 #include "stringhelper.h"
 #include "atomichelpers.h"
-
-#include "stunbuilder.h"
+#include "chkmacros.h"
+#include "stunauth.h"
+#include "internal_definitions.hpp"
 #include "crc32.h"
 
 #ifndef __APPLE__
@@ -30,7 +31,8 @@
 #include <CommonCrypto/CommonCrypto.h>
 #endif
 
-#include "stunauth.h"
+#include <unistd.h>
+#include <fcntl.h>
 
 static int g_sequence_number = 0xaaaaaaaa;
 
@@ -107,7 +109,7 @@ HRESULT CStunMessageBuilder::AddRandomTransactionId(StunTransactionId* pTransId)
         {
             int readret = read(randomfile, &entropy, sizeof(entropy));
             UNREFERENCED_VARIABLE(readret);
-            ASSERT(readret > 0);
+            assert(readret > 0);
             close(randomfile);
         }
     }
@@ -369,7 +371,7 @@ HRESULT CStunMessageBuilder::AddMappedAddressImpl(uint16_t attribute, const CSoc
     port = addr.GetPort_NBO();
     length = addr.GetIP_NBO(ip, sizeof(ip));
     // if we ever had a length that was not a multiple of 4, we'd need to add padding
-    ASSERT((length == STUN_IPV4_LENGTH) || (length == STUN_IPV6_LENGTH));
+    assert((length == STUN_IPV4_LENGTH) || (length == STUN_IPV6_LENGTH));
 
     Chk(_stream.WriteUint8(0));
     Chk(_stream.WriteUint8(family));
@@ -420,7 +422,7 @@ HRESULT CStunMessageBuilder::AddFingerprintAttribute()
     pData = spBuffer->GetData();
     length = spBuffer->GetSize();
 
-    ASSERT(length > 8);
+    assert(length > 8);
     length = length - 8;
 
     value = crc32(pData, length);
@@ -477,7 +479,7 @@ HRESULT CStunMessageBuilder::AddMessageIntegrityImpl(uint8_t* key, size_t keysiz
     pData = spBuffer->GetData();
     length = spBuffer->GetSize();
 
-    ASSERT(length > 24);
+    assert(length > 24);
     length = length - 24;
 
     // now do a little pointer math so that HMAC can write exactly to where the hash bytes will appear
@@ -485,8 +487,8 @@ HRESULT CStunMessageBuilder::AddMessageIntegrityImpl(uint8_t* key, size_t keysiz
 
 #ifndef __APPLE__
     pHashResult = HMAC(EVP_sha1(), key, keysize, (uint8_t*)pData, length, pDstBuf, &resultlength);
-    ASSERT(resultlength == 20);
-    ASSERT(pHashResult != NULL);
+    assert(resultlength == 20);
+    assert(pHashResult != NULL);
 #else
     CCHmac(kCCHmacAlgSHA1, key, keysize, (uint8_t*)pData, length, pDstBuf);
     UNREFERENCED_VARIABLE(resultlength);
@@ -545,7 +547,7 @@ HRESULT CStunMessageBuilder::AddMessageIntegrityLongTerm(const char* pszUserName
     pDst += lenPassword;
     *pDst = '\0'; // null terminate for debugging (this char doesn not get hashed
 
-    ASSERT(key + lenTotal == pDst);
+    assert(key + lenTotal == pDst);
 
 #ifndef __APPLE__
     pResult = MD5(key, lenTotal, hash);
@@ -553,7 +555,7 @@ HRESULT CStunMessageBuilder::AddMessageIntegrityLongTerm(const char* pszUserName
     pResult = CC_MD5(key, lenTotal, hash);
 #endif
 
-    ASSERT(pResult != NULL);
+    assert(pResult != NULL);
     hr = AddMessageIntegrityImpl(hash, MD5_DIGEST_LENGTH);
 
 Cleanup:

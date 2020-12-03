@@ -14,22 +14,19 @@
    limitations under the License.
 */
 
-
-
-#include "commonincludes.hpp"
-#include "stuncore.h"
-
-#include "stunclientlogic.h"
 #include "stunclienttests.h"
 
+#include "stunclientlogic.h"
+#include "chkmacros.h"
+#include "stunutils.h"
+#include "logger.h"
 
-
-CStunClientTestBase::CStunClientTestBase() :
-_fInit(false),
-_pConfig(NULL),
-_pResults(NULL),
-_fCompleted(false),
-_transid() // zero-init
+CStunClientTestBase::CStunClientTestBase()
+: _fInit(false)
+, _pConfig(NULL)
+, _pResults(NULL)
+, _fCompleted(false)
+, _transid() // zero-init
 {
     ;
 }
@@ -74,7 +71,7 @@ HRESULT CStunClientTestBase::BasicReaderValidation(CRefCountedBuffer& spMsg, CSt
     int cmp = 0;
 
     readerstate = reader.AddBytes(spMsg->GetData(), spMsg->GetSize());
-    
+
     hr = (readerstate == CStunMessageReader::BodyValidated) ? S_OK : E_FAIL;
     if (FAILED(hr))
     {
@@ -94,8 +91,6 @@ HRESULT CStunClientTestBase::BasicReaderValidation(CRefCountedBuffer& spMsg, CSt
     return hr;
 }
 
-
-
 bool CStunClientTestBase::IsCompleted()
 {
     return _fCompleted;
@@ -106,12 +101,7 @@ void CStunClientTestBase::PreRunCheck()
     return;
 }
 
-
-
 // ----------------------------------------------------------------------------------
-
-
-
 
 bool CBasicBindingTest::IsReadyToRun()
 {
@@ -122,29 +112,28 @@ bool CBasicBindingTest::IsReadyToRun()
 HRESULT CBasicBindingTest::GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest)
 {
     StunChangeRequestAttribute attribChangeRequest = {};
-        
+
     HRESULT hr = S_OK;
-    ASSERT(spMsg->GetAllocatedSize() > 0);
-    ASSERT(pAddrDest);
-    ASSERT(_fInit);
+    assert(spMsg->GetAllocatedSize() > 0);
+    assert(pAddrDest);
+    assert(_fInit);
 
     CStunMessageBuilder builder;
     builder.GetStream().Attach(spMsg, true);
 
     Chk(StartBindingRequest(builder));
-    
+
     builder.AddChangeRequest(attribChangeRequest); // adding a blank CHANGE-REQUEST, because a JSTUN server will not respond if the request doesn't have one
-    
+
     builder.FixLengthField();
 
     *pAddrDest = _pConfig->addrServer;
-
 
 Cleanup:
     return hr;
 }
 
-HRESULT CBasicBindingTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal)
+HRESULT CBasicBindingTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress&, CSocketAddress& addrLocal)
 {
     HRESULT hr = S_OK;
     CStunMessageReader reader;
@@ -171,7 +160,6 @@ HRESULT CBasicBindingTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddr
     _pResults->addrMapped = addrMapped;
     _pResults->fHasOtherAddress = fHasOtherAddress;
 
-
     if (fHasOtherAddress)
     {
         _pResults->addrAA = addrOther;
@@ -186,9 +174,8 @@ HRESULT CBasicBindingTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddr
         {
             char sz[100];
             addrOther.ToStringBuffer(sz, 100);
-            Logging::LogMsg(LL_DEBUG, "Other address is %s\n",sz);
+            Logging::LogMsg(LL_DEBUG, "Other address is %s\n", sz);
         }
-
     }
 
 Cleanup:
@@ -203,8 +190,6 @@ void CBasicBindingTest::NotifyTimeout()
 }
 
 // ----------------------------------------------------------------------------------
-
-
 
 CBehaviorTest::CBehaviorTest()
 {
@@ -229,7 +214,7 @@ void CBehaviorTest::PreRunCheck()
 bool CBehaviorTest::IsReadyToRun()
 {
     // we can run if the CBasicBindingTest succeeded and we have an "other" address
-    bool fRet = ((_fCompleted==false) && _pResults->fBindingTestSuccess && _pResults->fHasOtherAddress && (_pResults->fBehaviorTestSuccess==false));
+    bool fRet = ((_fCompleted == false) && _pResults->fBindingTestSuccess && _pResults->fHasOtherAddress && (_pResults->fBehaviorTestSuccess == false));
 
     if (_fIsTest3)
     {
@@ -238,23 +223,22 @@ bool CBehaviorTest::IsReadyToRun()
     }
 
     return fRet;
-
 }
 
 HRESULT CBehaviorTest::GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAddrDest)
 {
     HRESULT hr = S_OK;
-    ASSERT(spMsg->GetAllocatedSize() > 0);
-    ASSERT(pAddrDest);
-    
+    assert(spMsg->GetAllocatedSize() > 0);
+    assert(pAddrDest);
+
     StunChangeRequestAttribute attribChangeRequest = {};
 
     CStunMessageBuilder builder;
     builder.GetStream().Attach(spMsg, true);
     StartBindingRequest(builder);
-    
+
     builder.AddChangeRequest(attribChangeRequest); // adding a blank CHANGE-REQUEST, because a JSTUN server will not respond if the request doesn't have one
-    
+
     builder.FixLengthField();
 
     if (_fIsTest3 == false)
@@ -271,12 +255,11 @@ HRESULT CBehaviorTest::GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAdd
     return hr;
 }
 
-HRESULT CBehaviorTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal)
+HRESULT CBehaviorTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress&, CSocketAddress&)
 {
     HRESULT hr = S_OK;
     CStunMessageReader reader;
     CSocketAddress addrMapped;
-
 
     Chk(BasicReaderValidation(spMsg, reader));
 
@@ -288,7 +271,6 @@ HRESULT CBehaviorTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress&
     Chk(hr); // again drop the message if we can't parse the binding response
 
     _fCompleted = true;
-
 
     if (_fIsTest3)
     {
@@ -330,16 +312,12 @@ void CBehaviorTest::RunAsTest3(bool fSetAsTest3)
     _fIsTest3 = fSetAsTest3;
 }
 
-
-
 // ----------------------------------------------------------------------------------
-
 
 CFilteringTest::CFilteringTest()
 {
     _fIsTest3 = false;
 }
-
 
 void CFilteringTest::PreRunCheck()
 {
@@ -355,11 +333,10 @@ void CFilteringTest::PreRunCheck()
     }
 }
 
-
 bool CFilteringTest::IsReadyToRun()
 {
     // we can run if the CBasicBindingTest succeeded and we have an "other" address
-    bool fRet = ((_fCompleted==false) && _pResults->fBindingTestSuccess && _pResults->fHasOtherAddress && (_pResults->fFilteringTestSuccess==false) && (_pResults->fGotTest2Response==false));
+    bool fRet = ((_fCompleted == false) && _pResults->fBindingTestSuccess && _pResults->fHasOtherAddress && (_pResults->fFilteringTestSuccess == false) && (_pResults->fGotTest2Response == false));
 
     return fRet;
 }
@@ -368,7 +345,6 @@ HRESULT CFilteringTest::GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAd
 {
     CStunMessageBuilder builder;
     StunChangeRequestAttribute change;
-
 
     builder.GetStream().Attach(spMsg, true);
 
@@ -393,16 +369,13 @@ HRESULT CFilteringTest::GetMessage(CRefCountedBuffer& spMsg, CSocketAddress* pAd
 
     builder.FixLengthField();
 
-
     return S_OK;
 }
 
-
-HRESULT CFilteringTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress& addrRemote, CSocketAddress& addrLocal)
+HRESULT CFilteringTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress&, CSocketAddress&)
 {
     HRESULT hr = S_OK;
     CStunMessageReader reader;
-
 
     Chk(BasicReaderValidation(spMsg, reader));
 
@@ -425,7 +398,6 @@ HRESULT CFilteringTest::ProcessResponse(CRefCountedBuffer& spMsg, CSocketAddress
         _pResults->filtering = ::EndpointIndependentFiltering;
     }
 
-
 Cleanup:
     return hr;
 }
@@ -441,11 +413,9 @@ void CFilteringTest::NotifyTimeout()
         _pResults->fFilteringTestSuccess = true;
         _pResults->filtering = ::AddressAndPortDependentFiltering;
     }
-
 }
 
 void CFilteringTest::RunAsTest3(bool fSetAsTest3)
 {
     _fIsTest3 = fSetAsTest3;
 }
-

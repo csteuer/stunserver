@@ -14,12 +14,14 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-#include "stuncore.h"
 #include "stunsocket.h"
 #include "stunsocketthread.h"
 #include "server.h"
 #include "ratelimiter.h"
+#include "logger.h"
+#include "internal_definitions.hpp"
+
+#include <cassert>
 
 CStunServerConfig::CStunServerConfig()
 : fHasPP(false)
@@ -51,7 +53,7 @@ HRESULT CStunServer::AddSocket(TransportAddressSet* pTSA, SocketRole role, const
 {
     HRESULT hr = S_OK;
 
-    ASSERT(IsValidSocketRole(role));
+    assert(IsValidSocketRole(role));
 
     Chk(_arrSockets[role].UDPInit(addrListen, role, fSetReuseFlag));
     ChkA(_arrSockets[role].EnablePktInfoOption(true));
@@ -160,7 +162,7 @@ HRESULT CStunServer::Initialize(const CStunServerConfig& config)
             if (_arrSockets[index].IsValid())
             {
                 SocketRole rolePrimaryRecv = _arrSockets[index].GetRole();
-                ASSERT(rolePrimaryRecv == (SocketRole)index);
+                assert(rolePrimaryRecv == (SocketRole)index);
                 pThread = new CStunSocketThread();
                 ChkIf(pThread == NULL, E_OUTOFMEMORY);
                 _threads.push_back(pThread);

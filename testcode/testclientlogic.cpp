@@ -14,13 +14,10 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
-#include "stuncore.h"
-#include "unittest.h"
-
-#include "testmessagehandler.h"
-
 #include "testclientlogic.h"
+
+#include "stunutils.h"
+#include "chkmacros.h"
 
 HRESULT CTestClientLogic::Run()
 {
@@ -108,7 +105,7 @@ HRESULT CTestClientLogic::GetMappedAddressForDestinationAddress(const CSocketAdd
     }
     else
     {
-        ASSERT(false);
+        assert(false);
         hr = E_FAIL;
     }
 
@@ -133,7 +130,7 @@ SocketRole CTestClientLogic::GetSocketRoleForDestinationAddress(const CSocketAdd
     {
         return RoleAA;
     }
-    ASSERT(false);
+    assert(false);
     return RolePP;
 }
 

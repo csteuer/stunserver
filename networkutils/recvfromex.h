@@ -14,13 +14,11 @@
    limitations under the License.
 */
 
-
-
 #ifndef RECVFROMEX_H
-#define	RECVFROMEX_H
+#define RECVFROMEX_H
+
+#include "socketaddress.h"
 
 ssize_t recvfromex(int sockfd, void* buf, size_t len, int flags, CSocketAddress* pSrcAddr, CSocketAddress* pDstAddr);
 
-
-#endif	/* RECVFROMEX_H */
-
+#endif /* RECVFROMEX_H */

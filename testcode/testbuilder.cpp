@@ -14,18 +14,16 @@
    limitations under the License.
 */
 
-
-
-#include "commonincludes.hpp"
-
-#include "stuncore.h"
-
 #include "testbuilder.h"
+
+#include "chkmacros.h"
+#include "messagehandler.h"
+#include "stunbuilder.h"
 
 HRESULT CTestBuilder::Run()
 {
     HRESULT hr = S_OK;
-    Chk(Test1())
+    Chk(Test1());
     Chk(Test2());
 Cleanup:
     return hr;
@@ -41,15 +39,13 @@ HRESULT CTestBuilder::Test1()
     StunAttribute attrib;
     CRefCountedBuffer spBuffer;
     CRefCountedBuffer spBufferReader;
-    CSocketAddress addrValidate(0,0);
+    CSocketAddress addrValidate(0, 0);
     StunTransactionId transid = {};
     uint32_t ipvalidate = 0;
-
 
     CSocketAddress addr(0x7f000001, 9999);
     CSocketAddress addrOrigin(0xAABBCCDD, 8888);
     CSocketAddress addrOther(0x11223344, 7777);
-    
 
     ChkA(builder.AddBindingRequestHeader());
     ChkA(builder.AddRandomTransactionId(&transid));
@@ -83,14 +79,14 @@ HRESULT CTestBuilder::Test1()
     ChkIf(addrValidate.IsSameIP_and_Port(addr) == false, E_FAIL);
     ChkIfA(addrValidate.GetIPLength() != 4, E_FAIL);
 
-    addrValidate = CSocketAddress(0,0);
+    addrValidate = CSocketAddress(0, 0);
     ChkA(reader.GetMappedAddress(&addrValidate));
     ChkIfA(addrValidate.GetPort() != 9999, E_FAIL);
     ChkIfA(addrValidate.GetIPLength() != 4, E_FAIL);
     ChkIfA(4 != addrValidate.GetIP(&ipvalidate, 4), E_FAIL);
     ChkIfA(ipvalidate != 0x7f000001, E_FAIL);
 
-    addrValidate = CSocketAddress(0,0);
+    addrValidate = CSocketAddress(0, 0);
     ipvalidate = 0;
     reader.GetOtherAddress(&addrValidate);
     ChkIfA(addrValidate.GetPort() != 7777, E_FAIL);
@@ -98,18 +94,16 @@ HRESULT CTestBuilder::Test1()
     ChkIfA(4 != addrValidate.GetIP(&ipvalidate, 4), E_FAIL);
     ChkIf(ipvalidate != 0x11223344, E_FAIL);
 
-
 Cleanup:
-   return hr;
+    return hr;
 }
-
 
 // this test validates that IPV6 addresses work fine with CStunMessageBuilder and CStunMessageReader
 HRESULT CTestBuilder::Test2()
 {
     HRESULT hr = S_OK;
-    CSocketAddress addr(0,0);
-    CSocketAddress addrValidate(0,0);
+    CSocketAddress addr(0, 0);
+    CSocketAddress addrValidate(0, 0);
     const char* ip6addr = "ABCDEFGHIJKLMNOP";
     sockaddr_in6 addr6 = {};
     CStunMessageReader reader;
@@ -131,11 +125,9 @@ HRESULT CTestBuilder::Test2()
     ChkIfA(CStunMessageReader::BodyValidated != reader.AddBytes(spBuffer->GetData(), spBuffer->GetSize()), E_FAIL);
 
     ChkA(reader.GetXorMappedAddress(&addrValidate));
-    
+
     ChkIf(addrValidate.IsSameIP_and_Port(addr) == false, E_FAIL);
 
 Cleanup:
     return hr;
 }
-
-

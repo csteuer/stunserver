@@ -14,27 +14,23 @@
    limitations under the License.
 */
 
-
-#include "commonincludes.hpp"
-
-#include "stuncore.h"
-#include "recvfromex.h"
 #include "testrecvfromex.h"
-#include "stunsocket.h"
 
+#include "recvfromex.h"
+#include "stunsocket.h"
+#include "chkmacros.h"
+
+#include <arpa/inet.h>
 
 HRESULT CTestRecvFromExIPV4::Run()
 {
     return CTestRecvFromEx::DoTest(false); // ipv4
-    
 }
 
 HRESULT CTestRecvFromExIPV6::Run()
 {
     return CTestRecvFromEx::DoTest(true); // ipv6
 }
-
-
 
 // This test validates that the EnablePktInfoOption set on a socket allows us to get at the destination IP address for incoming packets
 // This is needed so that we can correctly insert an origin address into responses from the server
@@ -43,7 +39,7 @@ HRESULT CTestRecvFromEx::DoTest(bool fIPV6)
 {
     // create a couple of sockets for send/recv
     HRESULT hr = S_OK;
-    CSocketAddress addrAny(0,0); // INADDR_ANY, random port
+    CSocketAddress addrAny(0, 0); // INADDR_ANY, random port
     sockaddr_in6 addrAnyIPV6 = {};
     uint16_t portRecv = 0;
     CStunSocket socketSend, socketRecv;
@@ -51,33 +47,31 @@ HRESULT CTestRecvFromEx::DoTest(bool fIPV6)
     CSocketAddress addrDestForSend;
     CSocketAddress addrDestOnRecv;
     CSocketAddress addrSrcOnRecv;
-    
+
     CSocketAddress addrSrc;
     CSocketAddress addrDst;
-    
+
     char ch = 'x';
     sockaddr_storage addrDummy;
     socklen_t addrlength;
     int ret;
     timeval tv = {};
-    
-    
+
     if (fIPV6)
     {
         addrAnyIPV6.sin6_family = AF_INET6;
         addrAny = CSocketAddress(addrAnyIPV6);
     }
-    
-    
+
     // create two sockets listening on INADDR_ANY.  One for sending and one for receiving
     ChkA(socketSend.UDPInit(addrAny, RolePP, false));
 
     ChkA(socketRecv.UDPInit(addrAny, RolePP, false));
-    
+
     socketRecv.EnablePktInfoOption(true);
-    
+
     portRecv = socketRecv.GetLocalAddress().GetPort();
-    
+
     // now send to localhost
     if (fIPV6)
     {
@@ -94,7 +88,7 @@ HRESULT CTestRecvFromEx::DoTest(bool fIPV6)
         addrDestForSend = CSocketAddress(addr4);
     }
     addrDestForSend.SetPort(portRecv);
-    
+
     // flush out any residual packets that might be buffered up on recv socket
     ret = -1;
     do
@@ -102,30 +96,28 @@ HRESULT CTestRecvFromEx::DoTest(bool fIPV6)
         addrlength = sizeof(addrDummy);
         ret = ::recvfrom(socketRecv.GetSocketHandle(), &ch, sizeof(ch), MSG_DONTWAIT, (sockaddr*)&addrDummy, &addrlength);
     } while (ret >= 0);
-    
+
     // now send some data to ourselves
     ret = sendto(socketSend.GetSocketHandle(), &ch, sizeof(ch), 0, addrDestForSend.GetSockAddr(), addrDestForSend.GetSockAddrLength());
     ChkIfA(ret <= 0, E_UNEXPECTED);
-    
+
     // now wait for the data to arrive
     FD_ZERO(&set);
     FD_SET(socketRecv.GetSocketHandle(), &set);
     tv.tv_sec = 3;
-    
-    ret = select(socketRecv.GetSocketHandle()+1, &set, NULL, NULL, &tv);
-    
+
+    ret = select(socketRecv.GetSocketHandle() + 1, &set, NULL, NULL, &tv);
+
     ChkIfA(ret <= 0, E_UNEXPECTED);
-    
+
     ret = ::recvfromex(socketRecv.GetSocketHandle(), &ch, 1, MSG_DONTWAIT, &addrSrcOnRecv, &addrDestOnRecv);
-    
-    ChkIfA(ret <= 0, E_UNEXPECTED);    
-    
+
+    ChkIfA(ret <= 0, E_UNEXPECTED);
+
     ChkIfA(addrSrcOnRecv.IsIPAddressZero(), E_UNEXPECTED);
     ChkIfA(addrDestOnRecv.IsIPAddressZero(), E_UNEXPECTED);
-    
-    
+
 Cleanup:
 
     return hr;
 }
-

@@ -15,14 +15,13 @@
 */
 
 #ifndef OSHELPER_H
-#define	OSHELPER_H
+#define OSHELPER_H
 
+#include <cstdint>
+#include <cstddef>
 
 uint32_t GetMillisecondCounter();
 
 size_t GetConsoleWidth();
 
-
-
-#endif	/* OSHELPER_H */
-
+#endif /* OSHELPER_H */

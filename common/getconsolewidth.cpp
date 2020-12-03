@@ -14,8 +14,8 @@
    limitations under the License.
 */
 
+#include <cstddef>
 
-#include "commonincludes.hpp"
 #include "oshelper.h"
 
 #ifndef _WIN32
@@ -41,9 +41,8 @@ static size_t GetConsoleWidthUnix()
 size_t GetConsoleWidth()
 {
 #ifdef _WIN32
-    return DEFAULT_CONSOLE_WIDTH;  // todo - call appropriate console apis when we port to windows
+    return DEFAULT_CONSOLE_WIDTH; // todo - call appropriate console apis when we port to windows
 #else
     return GetConsoleWidthUnix();
 #endif
 }
-

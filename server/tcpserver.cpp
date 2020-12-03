@@ -14,12 +14,13 @@
    limitations under the License.
 */
 
-#include "commonincludes.hpp"
 #include "tcpserver.h"
-#include "server.h"
-#include "stunsocket.h"
 
-#include "stunsocketthread.h"
+#include "logger.h"
+#include "internal_definitions.hpp"
+
+#include <cassert>
+#include <unistd.h>
 
 // client sockets are now level triggered
 const uint32_t EPOLL_CLIENT_READ_EVENT_SET = IPOLLING_READ | IPOLLING_RDHUP;
@@ -69,8 +70,8 @@ void CTCPStunThread::Reset()
     _connectionpool.Reset();
 
     // the thread should have closed all the connections
-    ASSERT(_hashConnections1.Size() == 0);
-    ASSERT(_hashConnections2.Size() == 0);
+    assert(_hashConnections1.Size() == 0);
+    assert(_hashConnections2.Size() == 0);
     _hashConnections1.ResetTable();
     _hashConnections2.ResetTable();
 
@@ -83,7 +84,7 @@ void CTCPStunThread::Reset()
 CTCPStunThread::~CTCPStunThread()
 {
     Stop();                 // calls Reset
-    ASSERT(_pipe[0] == -1); // quick assert to make sure reset was called
+    assert(_pipe[0] == -1); // quick assert to make sure reset was called
 }
 
 HRESULT CTCPStunThread::CreatePipes()
@@ -91,8 +92,8 @@ HRESULT CTCPStunThread::CreatePipes()
     HRESULT hr = S_OK;
     int ret;
 
-    ASSERT(_pipe[0] == -1);
-    ASSERT(_pipe[1] == -1);
+    assert(_pipe[0] == -1);
+    assert(_pipe[1] == -1);
 
     ret = ::pipe(_pipe);
 
@@ -119,7 +120,7 @@ void CTCPStunThread::ClosePipes()
 
 HRESULT CTCPStunThread::NotifyThreadViaPipe()
 {
-    ASSERT(_pipe[1] != -1);
+    assert(_pipe[1] != -1);
     int ret;
 
     // _pipe[1] is the write end of the pipe
@@ -200,7 +201,7 @@ void CTCPStunThread::CloseListenSockets()
 
 CStunSocket* CTCPStunThread::GetListenSocket(int sock)
 {
-    ASSERT(sock != -1);
+    assert(sock != -1);
 
     if (sock != -1)
     {
@@ -253,7 +254,7 @@ HRESULT CTCPStunThread::Init(const TransportAddressSet& tsaListen, const Transpo
     ChkA(CreatePollingInstance(IPOLLING_TYPE_BEST, (size_t)(_maxConnections + 5), _spPolling.GetPointerPointer()));
 
     // add listen socket to epoll
-    ASSERT(_fListenSocketsOnEpoll == false);
+    assert(_fListenSocketsOnEpoll == false);
     ChkA(SetListenSocketsOnEpoll(true));
 
     // add read end of pipe to epoll so we can get notified of when a signal to exit has occurred
@@ -369,7 +370,7 @@ void CTCPStunThread::Run()
         }
 
         // hrPoll will be S_OK if there was an event.  S_FALSE otherwise
-        ASSERT(SUCCEEDED(hrPoll));
+        assert(SUCCEEDED(hrPoll));
 
         if (hrPoll == S_OK)
         {
@@ -404,7 +405,7 @@ void CTCPStunThread::Run()
     Logging::LogMsg(LL_DEBUG, "TCP Thread exiting");
 }
 
-void CTCPStunThread::ProcessConnectionEvent(int sock, uint32_t eventflags)
+void CTCPStunThread::ProcessConnectionEvent(int sock, uint32_t)
 {
     StunConnection** ppConn = NULL;
     StunConnection* pConn = NULL;
@@ -469,8 +470,8 @@ StunConnection* CTCPStunThread::AcceptConnection(CStunSocket* pListenSocket)
     int err;
     bool allowed_to_pass = true;
 
-    ASSERT(listensock != -1);
-    ASSERT(::IsValidSocketRole(role));
+    assert(listensock != -1);
+    assert(::IsValidSocketRole(role));
 
     socktmp = ::accept(listensock, (sockaddr*)&addrClient, &socklen);
 
@@ -538,9 +539,9 @@ HRESULT CTCPStunThread::ReceiveBytesForConnection(StunConnection* pConn)
 
     while (true)
     {
-        ASSERT(pConn->_state == ConnectionState_Receiving);
-        ASSERT(pConn->_reader.GetState() != CStunMessageReader::ParseError);
-        ASSERT(pConn->_reader.GetState() != CStunMessageReader::BodyValidated);
+        assert(pConn->_state == ConnectionState_Receiving);
+        assert(pConn->_reader.GetState() != CStunMessageReader::ParseError);
+        assert(pConn->_reader.GetState() != CStunMessageReader::BodyValidated);
 
         bytesneeded = pConn->_reader.HowManyBytesNeeded();
 
@@ -622,15 +623,15 @@ HRESULT CTCPStunThread::WriteBytesForConnection(StunConnection* pConn)
     bool fForceClose = false;
     int err;
 
-    ASSERT(pConn != NULL);
+    assert(pConn != NULL);
 
     pData = pConn->_spOutputBuffer->GetData();
     bytestotal = pConn->_spOutputBuffer->GetSize();
 
     while (true)
     {
-        ASSERT(pConn->_state == ConnectionState_Transmitting);
-        ASSERT(bytestotal > pConn->_txCount);
+        assert(pConn->_state == ConnectionState_Transmitting);
+        assert(bytestotal > pConn->_txCount);
 
         bytesremaining = bytestotal - pConn->_txCount;
 
@@ -652,7 +653,7 @@ HRESULT CTCPStunThread::WriteBytesForConnection(StunConnection* pConn)
         pConn->_txCount += sent;
 
         // txCount should never exceed the total output message size, right?
-        ASSERT(pConn->_txCount <= bytestotal);
+        assert(pConn->_txCount <= bytestotal);
 
         if (pConn->_txCount >= bytestotal)
         {
@@ -691,15 +692,15 @@ void CTCPStunThread::CloseConnection(StunConnection* pConn)
         // now figure out which hash table we were in
         if (pConn->_idHashTable == 1)
         {
-            VERIFY(_hashConnections1.Remove(sock) != -1);
+            assert(_hashConnections1.Remove(sock) != -1);
         }
         else if (pConn->_idHashTable == 2)
         {
-            VERIFY(_hashConnections2.Remove(sock) != -1);
+            assert(_hashConnections2.Remove(sock) != -1);
         }
         else
         {
-            ASSERT(pConn->_idHashTable == -1);
+            assert(pConn->_idHashTable == -1);
         }
 
         _connectionpool.ReleaseConnection(pConn);

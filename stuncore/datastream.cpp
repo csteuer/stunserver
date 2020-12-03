@@ -14,26 +14,25 @@
    limitations under the License.
 */
 
-
-
-#include "commonincludes.hpp"
 #include "datastream.h"
 
+#include "internal_definitions.hpp"
 
+#include <cstring>
+#include <cassert>
 
-CDataStream::CDataStream() :
-_pBuffer(NULL),
-_pos(0),
-_fNoGrow(false)
+CDataStream::CDataStream()
+: _pBuffer(NULL)
+, _pos(0)
+, _fNoGrow(false)
 {
     // _spBuffer is null
 }
 
-
-CDataStream::CDataStream(CRefCountedBuffer& spBuffer) :
-_spBuffer(spBuffer),
-_pos(0),
-_fNoGrow(false)
+CDataStream::CDataStream(CRefCountedBuffer& spBuffer)
+: _spBuffer(spBuffer)
+, _pos(0)
+, _fNoGrow(false)
 {
     _pBuffer = spBuffer.get();
 }
@@ -42,7 +41,6 @@ HRESULT CDataStream::SetSizeHint(size_t size)
 {
     return Grow(size);
 }
-
 
 void CDataStream::Reset()
 {
@@ -69,7 +67,7 @@ HRESULT CDataStream::Read(void* data, size_t size)
     size_t newpos = size + _pos;
     size_t currentSize = GetSize();
 
-    ASSERT(newpos <= currentSize);
+    assert(newpos <= currentSize);
 
     if (newpos > currentSize)
     {
@@ -85,7 +83,7 @@ HRESULT CDataStream::Grow(size_t size)
 {
     size_t currentAllocated = (_pBuffer ? _pBuffer->GetAllocatedSize() : 0);
     size_t currentSize = GetSize();
-    size_t newallocationsize=0;
+    size_t newallocationsize = 0;
 
     if (size <= currentAllocated)
     {
@@ -96,20 +94,19 @@ HRESULT CDataStream::Grow(size_t size)
     {
         return E_FAIL;
     }
-    
-    if (size > (currentAllocated*2))
+
+    if (size > (currentAllocated * 2))
     {
         newallocationsize = size;
     }
     else
     {
-        newallocationsize = currentAllocated*2;
+        newallocationsize = currentAllocated * 2;
     }
 
-    ASSERT(newallocationsize > 0);
+    assert(newallocationsize > 0);
 
     CRefCountedBuffer spNewBuffer(new CBuffer(newallocationsize));
-
 
     if (spNewBuffer->IsValid() == false)
     {
@@ -137,7 +134,7 @@ void CDataStream::SetNoGrow(bool fNoGrow)
 
 HRESULT CDataStream::Write(const void* data, size_t size)
 {
-    
+
     size_t newposition = size + _pos;
     size_t currentSize = GetSize();
     HRESULT hr = S_OK;
@@ -154,19 +151,17 @@ HRESULT CDataStream::Write(const void* data, size_t size)
         return hr;
     }
 
-    memcpy(_pBuffer->GetData()+_pos, data, size);
+    memcpy(_pBuffer->GetData() + _pos, data, size);
     _pos = newposition;
 
     if (newposition > currentSize)
     {
         hr = _pBuffer->SetSize(newposition);
-        ASSERT(SUCCEEDED(hr));
+        assert(SUCCEEDED(hr));
     }
 
     return hr;
 }
-
-
 
 bool CDataStream::IsEOF()
 {
@@ -197,7 +192,7 @@ HRESULT CDataStream::SeekDirect(size_t pos)
     }
     else
     {
-        ASSERT(false); // likely a programmer error if we seek out of the stream
+        assert(false); // likely a programmer error if we seek out of the stream
         hr = E_FAIL;
     }
 
@@ -239,9 +234,3 @@ uint8_t* CDataStream::GetDataPointerUnsafe()
 
     return pRet;
 }
-
-
-
-
-
-
