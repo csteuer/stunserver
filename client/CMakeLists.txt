@@ -4,4 +4,6 @@ target_link_libraries(stunclient stuntmancommon stuntmancore stuntmannetworkutil
 
 install(TARGETS stunclient EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib)
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    INCLUDES DESTINATION include)

@@ -39,4 +39,5 @@ install(FILES ${common_headers} DESTINATION include/)
 install(TARGETS stuntmancommon EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
     INCLUDES DESTINATION include)

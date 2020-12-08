@@ -33,6 +33,7 @@ install(FILES ${stuntmanserver_headers} DESTINATION include/)
 install(TARGETS stuntmanserver EXPORT StuntmanTargets
     RUNTIME DESTINATION bin
     LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
     INCLUDES DESTINATION include)
 
 ##########################################################################################################
