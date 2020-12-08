@@ -22,14 +22,7 @@
 #include "stunauth.h"
 #include "internal_definitions.hpp"
 #include "crc32.h"
-
-#ifndef __APPLE__
-#include <openssl/md5.h>
-#include <openssl/hmac.h>
-#else
-#define COMMON_DIGEST_FOR_OPENSSL
-#include <CommonCrypto/CommonCrypto.h>
-#endif
+#include "picohash.h"
 
 #include <unistd.h>
 #include <fcntl.h>
@@ -482,17 +475,15 @@ HRESULT CStunMessageBuilder::AddMessageIntegrityImpl(uint8_t* key, size_t keysiz
     assert(length > 24);
     length = length - 24;
 
-    // now do a little pointer math so that HMAC can write exactly to where the hash bytes will appear
-    pDstBuf = ((uint8_t*)pData) + length + 4;
+    uint8_t hmac[PICOHASH_SHA1_DIGEST_LENGTH];
+    picohash_ctx_t ctx;
+    picohash_init_hmac(&ctx, picohash_init_sha1, key, keysize);
+    picohash_update(&ctx, pData, length);
+    picohash_final(&ctx, hmac);
 
-#ifndef __APPLE__
-    pHashResult = HMAC(EVP_sha1(), key, keysize, (uint8_t*)pData, length, pDstBuf, &resultlength);
-    assert(resultlength == 20);
-    assert(pHashResult != NULL);
-#else
-    CCHmac(kCCHmacAlgSHA1, key, keysize, (uint8_t*)pData, length, pDstBuf);
-    UNREFERENCED_VARIABLE(resultlength);
-#endif
+    // Copy the hmac into the message
+    pDstBuf = ((uint8_t*)pData) + length + 4;
+    std::memcpy(pDstBuf, &hmac, PICOHASH_SHA1_DIGEST_LENGTH);
 
 Cleanup:
     return hr;
@@ -509,16 +500,13 @@ HRESULT CStunMessageBuilder::AddMessageIntegrityLongTerm(const char* pszUserName
     const size_t MAX_KEY_SIZE = MAX_STUN_AUTH_STRING_SIZE * 3 + 2;
     uint8_t key[MAX_KEY_SIZE + 1]; // long enough for 64-char strings and two semicolons and a null char for debugging
 
-    uint8_t hash[MD5_DIGEST_LENGTH] = {};
-    uint8_t* pResult = NULL;
+    uint8_t hash[PICOHASH_MD5_DIGEST_LENGTH] = {};
     uint8_t* pDst = key;
 
     size_t lenUserName = pszUserName ? strlen(pszUserName) : 0;
     size_t lenRealm = pszRealm ? strlen(pszRealm) : 0;
     size_t lenPassword = pszPassword ? strlen(pszPassword) : 0;
     size_t lenTotal = lenUserName + lenRealm + lenPassword + 2; // +2 for the two colons
-
-    UNREFERENCED_VARIABLE(pResult);
 
     ChkIfA(lenTotal > MAX_KEY_SIZE, E_INVALIDARG); // if we ever hit this limit, just increase MAX_STUN_AUTH_STRING_SIZE
 
@@ -549,14 +537,12 @@ HRESULT CStunMessageBuilder::AddMessageIntegrityLongTerm(const char* pszUserName
 
     assert(key + lenTotal == pDst);
 
-#ifndef __APPLE__
-    pResult = MD5(key, lenTotal, hash);
-#else
-    pResult = CC_MD5(key, lenTotal, hash);
-#endif
+    picohash_ctx_t ctx;
+    picohash_init_md5(&ctx);
+    picohash_update(&ctx, key, lenTotal);
+    picohash_final(&ctx, hash);
 
-    assert(pResult != NULL);
-    hr = AddMessageIntegrityImpl(hash, MD5_DIGEST_LENGTH);
+    hr = AddMessageIntegrityImpl(hash, PICOHASH_MD5_DIGEST_LENGTH);
 
 Cleanup:
     return hr;

@@ -20,8 +20,7 @@
 #include "stunsocket.h"
 #include "stunsocketthread.h"
 #include "server.h"
-
-#include <openssl/hmac.h>
+#include "picohash.h"
 
 static const char* c_szPrivateKey = "Change this string if you are going to use this code";
 static const char* c_szRealm = "YourRealmNameHere";
@@ -149,14 +148,16 @@ HRESULT CLongTermAuth::CreateNonce(char* pszNonce)
     // If you use this code, make sure you change the value of c_szPrivateKey!
 
     time_t thetime = time(NULL);
-    uint8_t hmacresult[20] = {};
+    uint8_t hmacresult[PICOHASH_SHA1_DIGEST_LENGTH] = {};
     char szHMAC[20 * 2 + 1];
     char szTime[sizeof(time_t) * 4];
-    unsigned int len = ARRAYSIZE(hmacresult);
 
     sprintf(szTime, "%u:", (unsigned int)thetime);
 
-    HMAC(::EVP_sha1(), (unsigned char*)c_szPrivateKey, strlen(c_szPrivateKey), (unsigned char*)szTime, strlen(szTime), hmacresult, &len);
+    picohash_ctx_t ctx;
+    picohash_init_hmac(&ctx, picohash_init_sha1, c_szPrivateKey, strlen(c_szPrivateKey));
+    picohash_update(&ctx, szTime, strlen(szTime));
+    picohash_final(&ctx, hmacresult);
 
     HmacToString(hmacresult, szHMAC);
 
@@ -170,12 +171,11 @@ HRESULT CLongTermAuth::ValidateNonce(char* pszNonce)
 {
     time_t thecurrenttime = time(NULL);
     time_t thetime;
-    uint8_t hmacresult[20] = {};
+    uint8_t hmacresult[PICOHASH_MD5_DIGEST_LENGTH] = {};
     char szHMAC[20 * 2 + 1];
     char szNonce[100];
     char* pRightHalf = NULL;
     time_t diff;
-    unsigned int len = ARRAYSIZE(hmacresult);
 
     strncpy(szNonce, pszNonce, ARRAYSIZE(szNonce));
     szNonce[ARRAYSIZE(szNonce) - 1] = 0;
@@ -199,7 +199,10 @@ HRESULT CLongTermAuth::ValidateNonce(char* pszNonce)
     }
 
     // nonce timestamp is valid, but was it signed by this server?
-    HMAC(::EVP_sha1(), (unsigned char*)c_szPrivateKey, strlen(c_szPrivateKey), (unsigned char*)szNonce, strlen(szNonce), hmacresult, &len);
+    picohash_ctx_t ctx;
+    picohash_init_hmac(&ctx, picohash_init_sha1, c_szPrivateKey, strlen(c_szPrivateKey));
+    picohash_update(&ctx, szNonce, strlen(szNonce));
+    picohash_final(&ctx, hmacresult);
     HmacToString(hmacresult, szHMAC);
     if (strcmp(szHMAC, pRightHalf))
     {

@@ -18,17 +18,9 @@
 #include "stunreader.h"
 #include "stunutils.h"
 #include "crc32.h"
+#include "picohash.h"
 #include "chkmacros.h"
 #include "internal_definitions.hpp"
-
-#ifndef __APPLE__
-#include <openssl/evp.h>
-#include <openssl/hmac.h>
-#include <openssl/md5.h>
-#else
-#define COMMON_DIGEST_FOR_OPENSSL
-#include <CommonCrypto/CommonCrypto.h>
-#endif
 
 #include "fasthash.h"
 #include "stunauth.h"
@@ -140,25 +132,8 @@ HRESULT CStunMessageReader::ValidateMessageIntegrity(uint8_t* key,
     int lastAttributeIndex = _countAttributes - 1;
     bool fFingerprintAdjustment = false;
     bool fNoOtherAttributesAfterIntegrity = false;
-    const size_t c_hmacsize = 20;
+    const size_t c_hmacsize = PICOHASH_SHA1_DIGEST_LENGTH;
     uint8_t hmaccomputed[c_hmacsize] = {}; // zero-init
-    unsigned int hmaclength = c_hmacsize;
-#ifndef __APPLE__
-    HMAC_CTX* ctx = NULL;
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-    HMAC_CTX ctxData = {};
-    ctx = &ctxData;
-    HMAC_CTX_init(ctx);
-#else
-    ctx = HMAC_CTX_new();
-#endif
-#else
-    CCHmacContext* ctx = NULL;
-    CCHmacContext ctxData = {};
-    ctx = &ctxData;
-
-    UNREFERENCED_VARIABLE(hmaclength);
-#endif
     uint32_t chunk32;
     uint16_t chunk16;
     size_t len, nChunks;
@@ -167,7 +142,6 @@ HRESULT CStunMessageReader::ValidateMessageIntegrity(uint8_t* key,
     StunAttribute* pAttribIntegrity = NULL;
 
     int cmp = 0;
-    bool fContextInit = false;
 
     ChkIf(_state != BodyValidated, E_FAIL);
 
@@ -201,24 +175,12 @@ HRESULT CStunMessageReader::ValidateMessageIntegrity(uint8_t* key,
 
     // Here comes the fun part.  If there is a fingerprint attribute, we have to
     // adjust the length header in computing the hash
-#ifndef __APPLE__
-#if OPENSSL_VERSION_NUMBER < 0x10100000L // could be lower!
-    HMAC_Init(ctx, key, keylength, EVP_sha1());
-#else
-    HMAC_Init_ex(ctx, key, keylength, EVP_sha1(), NULL);
-#endif
-#else
-    CCHmacInit(ctx, kCCHmacAlgSHA1, key, keylength);
-#endif
-    fContextInit = true;
+    picohash_ctx_t ctx;
+    picohash_init_hmac(&ctx, picohash_init_sha1, key, keylength);
 
     // message type
     Chk(stream.ReadUint16(&chunk16));
-#ifndef __APPLE__
-    HMAC_Update(ctx, (unsigned char*)&chunk16, sizeof(chunk16));
-#else
-    CCHmacUpdate(ctx, &chunk16, sizeof(chunk16));
-#endif
+    picohash_update(&ctx, &chunk16, sizeof(chunk16));
 
     // message length
     Chk(stream.ReadUint16(&chunk16));
@@ -233,11 +195,7 @@ HRESULT CStunMessageReader::ValidateMessageIntegrity(uint8_t* key,
         chunk16 = htons(adjustedlengthHeader);
     }
 
-#ifndef __APPLE__
-    HMAC_Update(ctx, (unsigned char*)&chunk16, sizeof(chunk16));
-#else
-    CCHmacUpdate(ctx, &chunk16, sizeof(chunk16));
-#endif
+    picohash_update(&ctx, &chunk16, sizeof(chunk16));
 
     // now include everything up to the hash attribute itself.
     len = pAttribIntegrity->offset;
@@ -253,18 +211,10 @@ HRESULT CStunMessageReader::ValidateMessageIntegrity(uint8_t* key,
     for (size_t count = 0; count < nChunks; count++)
     {
         Chk(stream.ReadUint32(&chunk32));
-#ifndef __APPLE__
-        HMAC_Update(ctx, (unsigned char*)&chunk32, sizeof(chunk32));
-#else
-        CCHmacUpdate(ctx, &chunk32, sizeof(chunk32));
-#endif
+        picohash_update(&ctx, &chunk32, sizeof(chunk32));
     }
 
-#ifndef __APPLE__
-    HMAC_Final(ctx, hmaccomputed, &hmaclength);
-#else
-    CCHmacFinal(ctx, hmaccomputed);
-#endif
+    picohash_final(&ctx, hmaccomputed);
 
     // now compare the bytes
     cmp = memcmp(hmaccomputed, spBuffer->GetData() + pAttribIntegrity->offset, c_hmacsize);
@@ -272,19 +222,6 @@ HRESULT CStunMessageReader::ValidateMessageIntegrity(uint8_t* key,
     hr = (cmp == 0 ? S_OK : E_FAIL);
 
 Cleanup:
-    if (fContextInit)
-    {
-#ifndef __APPLE__
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-        HMAC_CTX_cleanup(ctx);
-#else
-        HMAC_CTX_free(ctx);
-#endif
-#else
-        UNREFERENCED_VARIABLE(fContextInit);
-#endif
-    }
-
     return hr;
 }
 
@@ -311,7 +248,7 @@ HRESULT CStunMessageReader::ValidateMessageIntegrityLong(
     size_t userLength = pszUser ? strlen(pszUser) : 0;
     size_t realmLength = pszRealm ? strlen(pszRealm) : 0;
 
-    uint8_t hash[MD5_DIGEST_LENGTH] = {};
+    uint8_t hash[PICOHASH_MD5_DIGEST_LENGTH] = {};
 
     ChkIf(_state != BodyValidated, E_FAIL);
 
@@ -346,11 +283,10 @@ HRESULT CStunMessageReader::ValidateMessageIntegrityLong(
 
     assert(key + totallength == pDst);
 
-#ifndef __APPLE__
-    ChkIfA(NULL == MD5(key, totallength, hash), E_FAIL);
-#else
-    CC_MD5(key, totallength, hash);
-#endif
+    picohash_ctx_t ctx;
+    picohash_init_md5(&ctx);
+    picohash_update(&ctx, key, totallength);
+    picohash_final(&ctx, hash);
 
     Chk(ValidateMessageIntegrity(hash, ARRAYSIZE(hash)));
 

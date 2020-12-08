@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Threads REQUIRED)
-find_package(OpenSSL REQUIRED)
 
 option(with_configfile_support "The server can be configured with a json file (requires boost)" OFF)
 if (with_configfile_support)

@@ -11,6 +11,8 @@ John Selbie with the following changes:
 * Boost is optional (when building with CMake).
   * The CRC 32 implementation of boost has been replaced with a modified version of [Simple CRC32](http://home.thep.lu.se/~bjorn/crc/) by Björn Samuelsson.
   * Boost smart pointers have been replaced with C++11 smart pointers.
+* No OpenSSL dependency
+  * Uses [picohash](https://github.com/kazuho/picohash) instead
 * The way that headers are included has been changed so that its easier to reuse the library components of stuntman.
 * clang-format has been used to format the changed source files. 
   Although I have tried to create a formatting configuration close to the original style
