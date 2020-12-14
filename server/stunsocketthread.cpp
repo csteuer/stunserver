@@ -20,6 +20,8 @@
 #include "chkmacros.h"
 #include "internal_definitions.hpp"
 
+#include <pthread.h>
+
 CStunSocketThread::CStunSocketThread()
 : _arrSendSockets()
 , // zero-init

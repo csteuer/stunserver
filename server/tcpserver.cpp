@@ -21,6 +21,7 @@
 
 #include <cassert>
 #include <unistd.h>
+#include <pthread.h>
 
 // client sockets are now level triggered
 const uint32_t EPOLL_CLIENT_READ_EVENT_SET = IPOLLING_READ | IPOLLING_RDHUP;

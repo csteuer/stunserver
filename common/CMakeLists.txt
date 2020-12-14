@@ -27,6 +27,10 @@ add_library(stuntmancommon
     internal_definitions.hpp
 )
 
+if (ANDROID)
+    target_link_libraries(stuntmancommon log)
+endif()
+
 set_target_properties(stuntmancommon PROPERTIES
     OUTPUT_NAME common)
 

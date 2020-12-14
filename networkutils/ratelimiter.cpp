@@ -1,5 +1,7 @@
 #include "ratelimiter.h"
 
+#include <pthread.h>
+
 RateLimiter::RateLimiter(size_t tablesize, bool isUsingLock)
 {
     _table.InitTable(tablesize, tablesize / 2);

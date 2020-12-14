@@ -16,18 +16,24 @@
 
 #include "logger.h"
 
+#ifdef ANDROID
+#include <android/log.h>
+#else
 #include <cstdio>
+#endif
 #include <cstdarg>
 
 namespace Logging {
 static uint32_t s_loglevel = LL_ALWAYS; // error and usage messages only
 
+#ifndef ANDROID
 void VPrintMsg(const char* pszFormat, va_list& args)
 {
     ::vprintf(pszFormat, args);
     ::printf("\n");
     ::fflush(::stdout);
 }
+#endif
 
 uint32_t GetLogLevel()
 {
@@ -46,7 +52,24 @@ void LogMsg(uint32_t level, const char* pszFormat, ...)
 
     if (level <= s_loglevel)
     {
+#ifdef ANDROID
+        int androidLogLevel = ANDROID_LOG_UNKNOWN;
+        if (level == LL_ALWAYS)
+        {
+            androidLogLevel = ANDROID_LOG_INFO;
+        }
+        else if (level == LL_DEBUG)
+        {
+            androidLogLevel = ANDROID_LOG_DEBUG;
+        }
+        else
+        {
+            androidLogLevel = ANDROID_LOG_VERBOSE;
+        }
+        __android_log_vprint(androidLogLevel, "stuntman", pszFormat, args);
+#else
         VPrintMsg(pszFormat, args);
+#endif
     }
 
     va_end(args);
