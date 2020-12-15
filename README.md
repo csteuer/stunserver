@@ -8,6 +8,7 @@ This is a fork of [stunserver](https://github.com/jselbie/stunserver) from
 John Selbie with the following changes:
 
 * Added CMake support.
+* Added android support (requires API level >= 24)
 * Boost is optional (when building with CMake).
   * The CRC 32 implementation of boost has been replaced with a modified version of [Simple CRC32](http://home.thep.lu.se/~bjorn/crc/) by Björn Samuelsson.
   * Boost smart pointers have been replaced with C++11 smart pointers.
