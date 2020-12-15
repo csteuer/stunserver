@@ -36,7 +36,7 @@ target_include_directories(stuntmancore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include/>)
 
-target_link_libraries(stuntmancore stuntmancommon)
+target_link_libraries(stuntmancore PUBLIC stuntmancommon stuntmannetworkutils)
 
 install(FILES ${stuncore_headers} DESTINATION include/)
 
